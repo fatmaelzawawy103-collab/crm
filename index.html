@@ -138,9 +138,9 @@ textarea{min-height:70px;resize:vertical}
 .offbar button[aria-pressed="true"]{background:#163159;color:#fff;border-color:#163159}
 .offlist{padding:16px 18px 20px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));background:var(--soft)}
 .ticket{position:relative;border-radius:16px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;box-shadow:0 3px 12px rgba(22,49,89,.10);min-width:0}
-.tk-top{background:linear-gradient(120deg,#163159,#1986af);color:#fff;border-radius:15px 15px 0 0;padding:14px 16px 16px;display:grid;gap:2px;position:relative}
+.tk-top{background:linear-gradient(120deg,#163159,#1986af);color:#fff;border-radius:15px 15px 0 0;padding:14px 16px 16px;padding-inline-end:104px;display:grid;gap:2px;position:relative;min-height:84px}
 .tk-vendor{font-size:11px;letter-spacing:.06em;opacity:.8;font-weight:700}
-.tk-code{font-family:var(--f-mono);font-size:21px;font-weight:700;line-height:1.2;word-break:break-word;padding-inline-end:84px}
+.tk-code{font-family:var(--f-mono);font-size:20px;font-weight:700;line-height:1.25;overflow-wrap:anywhere;text-align:right}
 .tk-title{font-size:12.5px;opacity:.9}
 .tk-price{position:absolute;inset-inline-end:12px;top:12px;background:#fff;color:#163159;border-radius:12px;padding:4px 10px;text-align:center;line-height:1.1;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .tk-price b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
@@ -170,6 +170,7 @@ textarea{min-height:70px;resize:vertical}
 .tk-stamp{position:absolute;top:44%;inset-inline-start:50%;transform:translate(50%,-50%) rotate(-12deg);border:3px solid var(--warn);color:var(--warn);font-weight:800;font-size:20px;padding:2px 14px;border-radius:8px;opacity:.75;pointer-events:none;background:var(--surface)}
 [dir=ltr] .tk-stamp{transform:translate(-50%,-50%) rotate(-12deg)}
 .offlist .empty{grid-column:1/-1}
+.dup.soft{background:var(--t-think)!important;border-color:var(--c-think)!important}
 .tk-req{font-size:12.5px;background:var(--t-think);color:var(--ink);border-radius:8px;padding:6px 10px}
 .tk-req b{color:var(--c-think)}
 .tk-mine{border:2px dashed var(--c-think);background:var(--t-think);border-radius:12px;padding:8px 10px;display:grid;gap:6px;position:relative}
@@ -410,6 +411,7 @@ textarea{min-height:70px;resize:vertical}
     <button type="button" id="offAdd" class="primary">+ عرض جديد</button><button type="button" id="closeOffers" aria-label="إغلاق">✕</button></div>
   <div id="offForm" class="grid offform" hidden>
     <label>الاختبار<input id="o_exam" list="examsList" dir="auto" placeholder="مثال: AZ-104"></label>
+    <label>الشركة <span class="sub">(بتتعرف لوحدها، وتقدري تكتبيها)</span><input id="o_vendor" list="vendorsList" placeholder="تلقائي"><datalist id="vendorsList"></datalist></label>
     <label>عنوان العرض (اختياري)<input id="o_title" placeholder="مثال: عرض نوفمبر"></label>
     <label>السعر بالدولار<input id="o_price" type="number" min="0" step="any" inputmode="decimal"></label>
     <label>ساري لحد<input id="o_until" type="date"></label>
@@ -490,6 +492,11 @@ const fmtTime=t=>{if(!t)return"";let [h,m]=t.split(":").map(Number);const s=h<12
 const hhmm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 function ago(ms){if(!ms)return"";const m=Math.round((Date.now()-ms)/60000);if(m<1)return"دلوقتي";if(m<60)return`من ${m} د`;const h=Math.round(m/60);if(h<24)return`من ${h} س`;const d=Math.round(h/24);return d<30?`من ${d} يوم`:new Date(ms).toLocaleDateString("ar-EG")}
 const phoneKey=p=>String(p||"").replace(/\D/g,"").slice(-9);
+function linkKey(u){u=String(u||"").trim();if(!u)return"";try{const x=new URL(u);for(const k of ["selected_item_id","thread_id","threadid","conversation_id"]){const v=x.searchParams.get(k);if(v)return k+":"+v}
+  if(/\/inbox\/?[a-z]*\/?$/i.test(x.pathname)&&!x.search.replace(/[?&]?(asset_id|business_id|nav_ref|mailbox_id)=[^&]*/g,""))return"";
+  return (x.host.replace(/^www\.|^m\./,"")+x.pathname.replace(/\/$/,"")+x.search).toLowerCase()}catch(e){return u.toLowerCase()}}
+const GENERIC_NAMES=/^(instagram user|facebook user|messenger user|whatsapp user|user|مستخدم.*|عميل|unknown|غير معروف)$/i;
+function nameKey(n){const k=String(n||"").replace(/\(مثال\)/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/\s+/g," ").trim().toLowerCase();return k.length>=3&&!GENERIC_NAMES.test(k)?k:""}
 function waLink(p){let d=String(p||"").replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.startsWith("0")&&d.length===11)d="2"+d;return d.length>=8?"https://wa.me/"+d:""}
 function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2800)}
 function banner(msg){$("banner").textContent=msg||"";$("banner").hidden=!msg}
@@ -523,7 +530,7 @@ const offerLive=o=>o.active&&(!o.valid_until||o.valid_until>=today());
 function offerFor(r){const k=examKey(r&&r.exam);if(!k)return null;
   return OFFERS.filter(offerLive).find(o=>{const ok=examKey(o.exam);return ok&&(k.includes(ok)||ok.includes(k))})||null}
 const lines=t=>String(t||"").split(/\s*\n\s*|\s+\+\s+/).map(x=>x.replace(/^[-•*▫️✔️]+\s*/u,"")).filter(x=>x.trim());
-function offerDetails(o){const L=[],v=vendorOf(o.exam);
+function offerDetails(o){const L=[],v=vendorName(o);
   L.push(`🔥 ${o.title||"عرض خاص"} | ${o.exam||""}`);
   if(v!=="شهادة دولية")L.push(`🎓 شهادة ${v} الدولية`);
   L.push("━━━━━━━━━━━━");
@@ -712,7 +719,7 @@ $("addBtn").onclick=()=>openDlg();$("closeDlg").onclick=closeDlg;$("cancelBtn").
 $("saveBtn").onclick=async()=>{
   const data=formData();
   if(!data.name){$("f_name").focus();toast("اكتب اسم العميل");return}
-  if(!dupOk&&checkDup()){$("dupBox").scrollIntoView({block:"center"});toast("الرقم ده موجود قبل كده");return}
+  if(!dupOk&&checkDup()){$("dupBox").scrollIntoView({block:"center"});toast("العميل ده شكله موجود قبل كده");return}
   if(!isCourse(data.type)){data.courseStart="";data.courseDays=""}
   if(!data.followUp&&!isClosed(data)){const a=autoFollow(data);data.followUp=a.date;setAuto(a.label)}
   data.followLabel=data.followUp?autoLabel:"";
@@ -741,12 +748,17 @@ $("delBtn").onclick=async()=>{if(!delArmed){delArmed=true;$("delBtn").textConten
   try{await deleteLead(editingId);closeDlg();toast("اتحذف العميل")}catch(err){toast(errMsg(err))}};
 
 /* ================= duplicates ================= */
-function checkDup(){const k=phoneKey($("f_phone").value),box=$("dupBox");
-  const d=k.length>=8?rows.find(r=>r.id!==editingId&&phoneKey(r.phone)===k):null;
+function checkDup(){const box=$("dupBox"),pk=phoneKey($("f_phone").value),lk=linkKey($("f_link").value),nk=nameKey($("f_name").value),ch=$("f_channel").value;
+  const others=rows.filter(r=>r.id!==editingId);let d=null,why="",hard=true;
+  if(pk.length>=8){d=others.find(r=>phoneKey(r.phone)===pk);why="الرقم ده"}
+  if(!d&&lk){d=others.find(r=>linkKey(r.link)===lk);why="لينك المحادثة ده"}
+  if(!d&&nk){d=others.find(r=>nameKey(r.name)===nk&&(r.channel||"")===ch);why="الاسم ده على نفس القناة";hard=false}
   if(!d||dupOk){box.hidden=true;return false}
-  box.hidden=false;box.innerHTML=`<span>⚠️ الرقم ده موجود قبل كده باسم «${esc(d.name)}» · ${esc(d.channel||"")} · ${esc(d.status||"")}</span>
-    <button type="button" data-dup="open">افتح العميل الموجود</button><button type="button" data-dup="ok">احفظ برضه</button>`;
-  box.dataset.id=d.id;return true}
+  box.hidden=false;box.classList.toggle("soft",!hard);
+  box.innerHTML=`<span>${hard?"⚠️":"🔎"} ${why} موجود قبل كده باسم «${esc(d.name)}» · ${esc(d.channel||"")} · ${esc(d.status||"")}${hard?"":" — ممكن يكون شخص تاني بنفس الاسم"}</span>
+    <button type="button" data-dup="open">افتح العميل الموجود</button><button type="button" data-dup="ok">${hard?"احفظ برضه":"ده شخص تاني"}</button>`;
+  box.dataset.id=d.id;return hard}
+["f_link","f_name","f_channel"].forEach(id=>$(id).addEventListener("change",()=>{dupOk=false;checkDup()}));
 $("f_phone").addEventListener("change",()=>{dupOk=false;checkDup();const wa=waLink($("f_phone").value);$("openWa").hidden=!wa;if(wa)$("openWa").href=wa});
 $("dupBox").addEventListener("click",e=>{const a=e.target.dataset.dup;if(!a)return;
   if(a==="ok"){dupOk=true;$("dupBox").hidden=true}else{const id=$("dupBox").dataset.id;closeDlg();openDlg(id)}});
@@ -779,8 +791,10 @@ $("tplCopy").onclick=async()=>{if(!(await copyText($("tplText").value,"اتنس�
 /* ================= offers ================= */
 function matchCount(o){const k=examKey(o.exam);return k?rows.filter(r=>{const e=examKey(r.exam);return e&&(e.includes(k)||k.includes(e))}).length:0}
 let offTab="all";
-const VENDORS=[["AZ-|AI-|DP-|MS-|SC-|PL-|MD-|MB-","Microsoft"],["CCNA|CCNP|CCIE|200-|300-|350-","Cisco"],["SECURITY\+|NETWORK\+|A\+|CYSA|PENTEST|CASP","CompTIA"],["NSE|FCP|FCSS|FORTI","Fortinet"],["AWS|SAA|SOA|CLF","AWS"],["PMP|CAPM|PMI","PMI"],["ITIL","PeopleCert"],["PCAP|PCEP|PCPP","Python Institute"],["CISSP|CISM|CISA|CCSP","ISC2 / ISACA"]];
-function vendorOf(ex){const k=String(ex||"").toUpperCase();const v=VENDORS.find(([re])=>new RegExp(re).test(k));return v?v[1]:"شهادة دولية"}
+const VENDORS=[[/\b(HCIA|HCIP|HCIE|HCSA|HCSP)\b|\bH\d{2}-\d{3}/,"Huawei"],[/\b(AZ|AI|DP|MS|SC|PL|MD|MB|PL|MO)-\d{2,3}\b/,"Microsoft"],[/\b(CCNA|CCNP|CCIE|CCST|DEVNET|CYBEROPS)\b|\b(200|300|350|500|010|100)-\d{3}\b/,"Cisco"],[/SECURITY\+|NETWORK\+|\bA\+|CYSA\+?|PENTEST\+?|CASP\+?|SECURITYX|CLOUD\+|LINUX\+|SERVER\+|DATA\+|\b(SY0|N10|CS0|PT0|CAS|220|CV0|XK0|SK0|DA0)-\d{3}/,"CompTIA"],[/\b(NSE|FCP|FCSS|FCA|FCX)(\s?\d)?\b|FORTI/,"Fortinet"],[/\bAWS\b|\b(SAA|SOA|CLF|DVA|SAP|DOP|ANS|SCS|MLS|DEA|AIF)-C0\d/,"AWS"],[/\b(PMP|CAPM|PMI-ACP|PMI-RMP|PGMP|PFMP)\b/,"PMI"],[/\bITIL\b|PRINCE2/,"PeopleCert"],[/\b(PCAP|PCEP|PCPP|PCAD)\b/,"Python Institute"],[/\b(CISSP|CCSP|SSCP|CGRC|CSSLP)\b/,"ISC2"],[/\b(CISA|CISM|CRISC|CGEIT|CDPSE|COBIT)\b/,"ISACA"],[/\b(CEH|CHFI|CND|ECSA|CPENT|CCISO)\b/,"EC-Council"],[/\b(JNCIA|JNCIS|JNCIP|JNCIE)\b|\bJN0-\d/,"Juniper"],[/\b(PCNSA|PCNSE|PCCET|PCCSE)\b/,"Palo Alto"],[/\b(CCSA|CCSE|CCSM)\b|\b156-\d{3}/,"Check Point"],[/\b(CKA|CKAD|CKS|KCNA|LFCS)\b/,"Linux Foundation"],[/\b(RHCSA|RHCE|EX\d{3})\b/,"Red Hat"],[/\b(LPIC|LINUX ESSENTIALS)\b|\b(101|102|201|202)-500\b/,"LPI"],[/\b(VCP|VCTA|VCAP)\b|\b2V0-|\b5V0-/,"VMware"],[/\b1Z0-\d{3}/,"Oracle"],[/\bF5\b|\b(101|201|301)\b.*F5/,"F5"],[/\bUIPATH\b|\b(UIARD|UIRPA|UIARC)\b|\b(AABP|AAA|ABAA|ABAI|ADA|ADP|IEPS)V\d/,"UiPath"],[/\bISTQB\b|\bCTFL\b/,"ISTQB"],[/\bGOOGLE\b|\b(ACE|PCA|PCNE|PCSE|PCDE)\b/,"Google Cloud"],[/\bSALESFORCE\b/,"Salesforce"]];
+const VENDOR_NAMES=[...new Set(VENDORS.map(v=>v[1]))];
+function vendorOf(ex){const k=String(ex||"").toUpperCase();const v=VENDORS.find(([re])=>re.test(k));return v?v[1]:"شهادة دولية"}
+const vendorName=o=>String(o&&o.vendor||"").trim()||vendorOf(o&&o.exam);
 function daysLeft(o){if(!o.valid_until)return null;return Math.round((new Date(o.valid_until+"T00:00:00")-new Date(today()+"T00:00:00"))/864e5)}
 function offState(o){if(!offerLive(o))return"done";const d=daysLeft(o);return d!=null&&d<=7?"soon":"live"}
 function renderOffers(){const q=examKey($("offQ").value),adm=isAdmin();$("offAdd").hidden=!adm;
@@ -793,7 +807,7 @@ function renderOffers(){const q=examKey($("offQ").value),adm=isAdmin();$("offAdd
     const time=st==="done"?`<span class="tk-pill done">${o.active?"انتهى "+fmtDate(o.valid_until):"متوقف"}</span>`
       :d==null?`<span class="tk-pill">ساري ومفتوح</span>`:`<span class="tk-pill ${st==="soon"?"soon":""}">${d===0?"آخر يوم النهارده":"باقي "+d+(d===1?" يوم":d<=10?" أيام":" يوم")}</span><span class="sub">لحد ${fmtDate(o.valid_until)}</span>`;
     return `<article class="ticket ${st==="done"?"off":""}">
-      <div class="tk-top"><span class="tk-vendor">${esc(vendorOf(o.exam))}</span><span class="tk-code" dir="ltr">${esc(o.exam)}</span>${o.title?`<span class="tk-title">${esc(o.title)}</span>`:""}
+      <div class="tk-top"><span class="tk-vendor">${esc(vendorName(o))}</span><span class="tk-code" dir="ltr">${esc(o.exam)}</span>${o.title?`<span class="tk-title">${esc(o.title)}</span>`:""}
         ${o.price!=null&&o.price!==""?`<span class="tk-price"><b>${(+o.price).toLocaleString("en-US")}$</b><small>دولار</small></span>`:""}</div>
       <div class="tk-cut"></div>
       <div class="tk-body">
@@ -811,20 +825,21 @@ function renderOffers(){const q=examKey($("offQ").value),adm=isAdmin();$("offAdd
   $("examsList").innerHTML=[...new Set(rows.map(r=>r.exam).filter(Boolean))].map(e=>`<option value="${esc(e)}">`).join("")}
 function openOfferForm(o){editingOffer=o||null;offDelArmed=false;$("offForm").hidden=false;
   $("o_exam").value=o?o.exam:"";$("o_title").value=o?o.title||"":"";$("o_price").value=o&&o.price!=null?o.price:"";$("o_until").value=o?o.valid_until||"":"";
-  $("o_includes").value=o?o.includes||"":"";$("o_req").value=o?o.requirements||"":"";$("o_custom").value=o?o.custom_text||"":"";$("o_msg").value=o?o.message||DEFAULT_OFFER_MSG:DEFAULT_OFFER_MSG;$("o_active").checked=o?!!o.active:true;
+  $("o_vendor").value=o?o.vendor||"":"";$("o_vendor").placeholder="تلقائي: "+vendorOf(o?o.exam:"");$("vendorsList").innerHTML=VENDOR_NAMES.map(v=>`<option value="${esc(v)}">`).join("");$("o_includes").value=o?o.includes||"":"";$("o_req").value=o?o.requirements||"":"";$("o_custom").value=o?o.custom_text||"":"";$("o_msg").value=o?o.message||DEFAULT_OFFER_MSG:DEFAULT_OFFER_MSG;$("o_active").checked=o?!!o.active:true;
   $("o_del").hidden=!o;$("o_del").textContent="حذف العرض";$("o_exam").focus()}
 $("offersBtn").onclick=async()=>{$("offForm").hidden=true;renderOffers();$("offersDlg").showModal();await loadOffers();renderOffers()};
 $("closeOffers").onclick=()=>$("offersDlg").close();
 $("offQ").addEventListener("input",renderOffers);
 $("offBar").addEventListener("click",e=>{const b=e.target.closest("[data-ot]");if(b){offTab=b.dataset.ot;renderOffers()}});
 $("offAdd").onclick=()=>openOfferForm(null);
+$("o_exam").addEventListener("input",()=>{$("o_vendor").placeholder="تلقائي: "+vendorOf($("o_exam").value)});
 $("o_cancel").onclick=()=>{$("offForm").hidden=true};
 $("o_save").onclick=async()=>{const exam=$("o_exam").value.trim();if(!exam){$("o_exam").focus();toast("اكتبي اسم الاختبار");return}
   const d={exam,title:$("o_title").value.trim(),price:$("o_price").value===""?null:parseFloat($("o_price").value),valid_until:$("o_until").value||null,
-    includes:$("o_includes").value.trim(),requirements:$("o_req").value.trim(),custom_text:$("o_custom").value.trim(),message:$("o_msg").value.trim(),active:$("o_active").checked,updated_at:new Date().toISOString()};
+    vendor:$("o_vendor").value.trim(),includes:$("o_includes").value.trim(),requirements:$("o_req").value.trim(),custom_text:$("o_custom").value.trim(),message:$("o_msg").value.trim(),active:$("o_active").checked,updated_at:new Date().toISOString()};
   $("o_save").disabled=true;
   try{const q=editingOffer?SB.from("offers").update(d).eq("id",editingOffer.id):SB.from("offers").insert(d);const {error}=await q;if(error)throw error;
-    await loadOffers();$("offForm").hidden=true;renderOffers();render();toast(editingOffer?"اتحفظ العرض":"اتضاف العرض")}catch(e){toast(/requirements|custom_text/.test(String(e&&e.message))?"محتاجة تشغّلي كود Supabase الجديد للعروض الأول":errMsg(e))}finally{$("o_save").disabled=false}};
+    await loadOffers();$("offForm").hidden=true;renderOffers();render();toast(editingOffer?"اتحفظ العرض":"اتضاف العرض")}catch(e){toast(/requirements|custom_text|vendor/.test(String(e&&e.message))?"محتاجة تشغّلي كود Supabase الجديد للعروض الأول":errMsg(e))}finally{$("o_save").disabled=false}};
 $("o_del").onclick=async()=>{if(!offDelArmed){offDelArmed=true;$("o_del").textContent="اضغطي تاني للتأكيد";return}
   try{const {error}=await SB.from("offers").delete().eq("id",editingOffer.id);if(error)throw error;await loadOffers();$("offForm").hidden=true;renderOffers();toast("اتحذف العرض")}catch(e){toast(errMsg(e))}};
 $("offList").addEventListener("click",async e=>{const b=e.target.closest("[data-o]");if(!b)return;const o=OFFERS.find(x=>x.id===b.dataset.id);if(!o)return;
@@ -990,8 +1005,8 @@ $("importFile").onchange=async e=>{const file=e.target.files[0];e.target.value="
     if(!ST[d.status])d.status=d.status||"جديد";if(!REPLIES.includes(d.reply))d.reply="غير محدد";if(!REASONS.includes(d.reason))d.reason="";
     if(!d.followUp&&!isClosed(d)){const a=autoFollow(d);d.followUp=a.date;d.followLabel=a.label}else d.followLabel=d.followUp?"ميعاد محدد":"";
     return d}).filter(d=>d.name);
-  const seen=new Set(rows.map(r=>phoneKey(r.phone)).filter(k=>k.length>=8));let skipped=0;
-  items=items.filter(d=>{const k=phoneKey(d.phone);if(k.length>=8&&seen.has(k)){skipped++;return false}if(k.length>=8)seen.add(k);return true});
+  const seen=new Set(rows.map(r=>phoneKey(r.phone)).filter(k=>k.length>=8)),seenL=new Set(rows.map(r=>linkKey(r.link)).filter(Boolean));let skipped=0;
+  items=items.filter(d=>{const k=phoneKey(d.phone),l=linkKey(d.link);if((k.length>=8&&seen.has(k))||(l&&seenL.has(l))){skipped++;return false}if(k.length>=8)seen.add(k);if(l)seenL.add(l);return true});
   banner(`جاري استيراد ${items.length} عميل…`);let ok=0,fail=0;
   for(let i=0;i<items.length;i+=200){const chunk=items.slice(i,i+200).map(toDb);
     const {data,error}=await SB.from("leads").insert(chunk).select();
