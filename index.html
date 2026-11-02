@@ -102,6 +102,15 @@ textarea{min-height:70px;resize:vertical}
 .quick button{padding:2px 9px;font-size:12px;font-weight:600;border-radius:6px}
 .dlg-foot{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface)}
 .meta-line{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.remain{font-size:18px;font-weight:800;color:var(--ink);padding:4px 0;font-variant-numeric:tabular-nums}
+.remain.due{color:var(--warn)}
+.badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.bdg{font-size:11.5px;font-weight:700;padding:1px 7px;border-radius:6px;background:var(--soft);white-space:nowrap}
+.bdg.money{background:var(--t-think);color:var(--ink)}
+.bdg.money.late{background:var(--t-price);color:var(--warn)}
+.bdg.exam{background:var(--t-ready)}
+.bdg.pass{background:var(--t-booked);color:var(--ok)}
+.bdg.fail{background:var(--t-price);color:var(--warn)}
 .dup{grid-column:1/-1;background:var(--t-price);border:1px solid var(--c-price);border-radius:8px;padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-weight:700}
 .dup span{flex:1 1 220px}
 .tpl{grid-column:1/-1;display:grid;gap:8px}
@@ -193,7 +202,7 @@ textarea{min-height:70px;resize:vertical}
     <button type="button" id="mineBtn" class="chip" hidden>👤 عملائي</button>
     <input type="search" id="q" placeholder="بحث بالاسم، الرقم، الاختبار، الملخص…">
     <select id="fBrand"></select><select id="fChannel"></select><select id="fType"></select>
-    <select id="fReason"></select><select id="fOwner"></select>
+    <select id="fReason"></select><select id="fCampaign"></select><select id="fOwner"></select>
   </div>
   <div class="chips" id="statusChips"></div>
   <div class="tablebox">
@@ -231,8 +240,23 @@ textarea{min-height:70px;resize:vertical}
     <label>سبب التوقف<select id="f_reason"></select></label>
     <label>أول رسالة<input type="date" id="f_first"><span class="quick" data-for="f_first"><button type="button" data-d="0">النهارده</button><button type="button" data-d="-1">امبارح</button></span></label>
     <label>آخر رسالة<input type="date" id="f_last"><span class="quick" data-for="f_last"><button type="button" data-d="0">النهارده</button><button type="button" data-d="-1">امبارح</button></span></label>
+    <label>الحملة الإعلانية<input id="f_campaign" list="campaignsList" placeholder="جه من أنهي إعلان؟"></label>
     <label class="full">رابط المحادثة في Meta<input id="f_link" dir="ltr" type="url" placeholder="افتح المحادثة في Meta Business Suite وانسخ الرابط من فوق"></label>
     <label class="full">ملخص المحادثة<textarea id="f_summary" placeholder="العميل عايز إيه، وقف عند إيه، وإيه اللي اتقاله"></textarea></label>
+
+    <div class="sec">الدفع</div>
+    <label>السعر<input id="f_price" type="number" min="0" step="any" inputmode="decimal"></label>
+    <label>المدفوع<input id="f_paid" type="number" min="0" step="any" inputmode="decimal"></label>
+    <label>العملة<select id="f_currency"></select></label>
+    <label>المتبقي<output id="remainOut" class="remain">—</output></label>
+    <label>ميعاد دفع المتبقي (دفع مؤجل)<input type="date" id="f_due">
+      <span class="quick" data-for="f_due"><button type="button" data-d="7">بعد أسبوع</button><button type="button" data-d="14">بعد أسبوعين</button><button type="button" data-d="30">بعد شهر</button></span></label>
+
+    <div class="sec">الامتحان</div>
+    <label>تاريخ الامتحان<input type="date" id="f_examDate"></label>
+    <label>ساعة الامتحان<input type="time" id="f_examTime"></label>
+    <label>النتيجة<select id="f_result"><option value="">لسه</option><option>نجح</option><option>رسب</option></select></label>
+    <label>الشهادة الجاية (بعد النجاح)<input id="f_nextCert" dir="auto" placeholder="مثال: AZ-700"></label>
 
     <div class="sec">المتابعة</div>
     <label id="lb_cstart">بداية الكورس<input type="date" id="f_cstart"></label>
@@ -257,7 +281,7 @@ textarea{min-height:70px;resize:vertical}
       <ol class="log" id="logList"></ol>
     </div>
     <div class="meta-line" id="metaLine"></div>
-    <datalist id="countriesList"></datalist>
+    <datalist id="countriesList"></datalist><datalist id="campaignsList"></datalist>
   </form>
   <div class="dlg-foot">
     <button class="primary" type="button" id="saveBtn">حفظ</button>
@@ -306,6 +330,7 @@ const SUPABASE_KEY="sb_publishable_TkpzhaLT1t3Chp0p35iWlA_OeQht1IJ";
 const STATUSES=[["جديد","new"],["مهتم","int"],["بيسأل عن السعر","price"],["بيسأل عن كورس","course"],["بيفكر","think"],["جاهز للحجز","ready"],["يحتاج متابعة","follow"],["بيذاكر (في الكورس)","study"],["تم التحويل","transfer"],["تم الحجز","booked"],["غير مهتم","lost"]];
 const ST=Object.fromEntries(STATUSES);
 const CLOSED=["تم الحجز","غير مهتم"];
+const isClosed=r=>CLOSED.includes(r.status)&&!r.result; /* بعد النتيجة (نجح/رسب) العميل بيرجع للمتابعة */
 const BRANDS=["3ARAB EL IT","PLUG IN IT"];
 const CHANNELS=["Messenger","Instagram","WhatsApp"];
 const TYPES=["كورس","حجز اختبار","الاتنين"];
@@ -315,7 +340,8 @@ const REPLIES=["نعم","لا","غير محدد"];
 const REASONS=["سأل وسكت","بيقارن بمنافس","السعر غالي","مش جاهز للامتحان لسه"];
 const COUNTRIES=["مصر","السعودية","الإمارات","الكويت","قطر","البحرين","عُمان","الأردن","العراق","لبنان","سوريا","فلسطين","اليمن","ليبيا","تونس","الجزائر","المغرب","السودان","موريتانيا","الصومال","جيبوتي","أمريكا","كندا","بريطانيا","ألمانيا","فرنسا","هولندا","إيطاليا","إسبانيا","السويد","تركيا","الهند","باكستان","ماليزيا","أستراليا"];
 const DEFAULT_RULES={reasons:{"سأل وسكت":1,"بيقارن بمنافس":2,"السعر غالي":3,"مش جاهز للامتحان لسه":7},noReason:3,courseDays:30};
-const TPL_KEYS=[["سأل وسكت","سأل وسكت"],["بيقارن بمنافس","بيقارن بمنافس"],["السعر غالي","السعر غالي"],["مش جاهز للامتحان لسه","مش جاهز للامتحان لسه"],["course1","كورس: نص المدة"],["course2","كورس: آخر المدة"],["ready","جاهز للحجز"],["general","متابعة عامة"]];
+const CURRENCIES=["USD","EGP","SAR","AED","KWD","QAR","OMR","BHD","JOD","EUR"];
+const TPL_KEYS=[["سأل وسكت","سأل وسكت"],["بيقارن بمنافس","بيقارن بمنافس"],["السعر غالي","السعر غالي"],["مش جاهز للامتحان لسه","مش جاهز للامتحان لسه"],["course1","كورس: نص المدة"],["course2","كورس: آخر المدة"],["ready","جاهز للحجز"],["payment","دفعة مستحقة"],["retake","رسب: إعادة الامتحان"],["upsell","بعد النجاح: الشهادة الجاية"],["general","متابعة عامة"]];
 const DEFAULT_TPL={
   "سأل وسكت":"أهلاً باشمهندس {name} 👋\nكنت سألت معانا عن {exam}، لسه مهتم؟\nلو عندك أي سؤال عن الحجز أو المواعيد أنا موجود.",
   "بيقارن بمنافس":"باشمهندس {name}، حابب أوضح إن الحجز عندنا بيتم رسمي باسمك من موقع الجهة المانحة، وبنمشي معاك في الإجراءات خطوة بخطوة لحد يوم الامتحان.\nتحب أبعتلك المواعيد المتاحة لـ {exam}؟",
@@ -324,11 +350,21 @@ const DEFAULT_TPL={
   "course1":"باشمهندس {name}، وصلت لفين في كورس {exam}؟ 💪\nلو في أي جزء محتاج توضيح ابعتلي.",
   "course2":"باشمهندس {name}، قربت تخلّص كورس {exam} 🎉\nتحب نحجزلك الامتحان الرسمي ونختار ميعاد يناسبك؟",
   "ready":"باشمهندس {name}، نبدأ إجراءات حجز {exam}؟\nهنعمل الأكونت باسمك بإيميلك، وتختار الميعاد اللي يناسبك، وأنا معاك في كل خطوة.",
+  "payment":"باشمهندس {name}، فكرة بس إن باقي مبلغ {remaining} بخصوص {exam} ميعاده {due}. تحب أبعتلك طرق الدفع؟",
+  "retake":"باشمهندس {name}، متزعلش خالص، كتير بيعدّوا من المرة التانية 💪\nتحب نشوف إمتى تكون جاهز ونحجزلك إعادة {exam}؟",
+  "upsell":"باشمهندس {name}، مبروك تاني على {exam} 🎉\nلو حابب تكمّل، الخطوة الجاية المناسبة ليك {next}. تحب أبعتلك تفاصيلها؟",
   "general":"باشمهندس {name}، بتابع معاك بخصوص {exam}، تحب نكمّل؟"};
 
 /* column mapping: app field -> db column */
-const COLS={name:"name",phone:"phone",country:"country",brand:"brand",channel:"channel",owner:"owner",type:"type",exam:"exam",status:"status",priority:"priority",reply:"reply",reason:"reason",firstMsg:"first_msg",lastMsg:"last_msg",link:"link",summary:"summary",courseStart:"course_start",courseDays:"course_days",followUp:"follow_up",followTime:"follow_time",followLabel:"follow_label",followCount:"follow_count",lastContact:"last_contact",notes:"notes"};
-const DATE_F=new Set(["firstMsg","lastMsg","courseStart","followUp","lastContact"]);
+const COLS={name:"name",phone:"phone",country:"country",brand:"brand",channel:"channel",owner:"owner",type:"type",exam:"exam",status:"status",priority:"priority",reply:"reply",reason:"reason",firstMsg:"first_msg",lastMsg:"last_msg",link:"link",summary:"summary",courseStart:"course_start",courseDays:"course_days",followUp:"follow_up",followTime:"follow_time",followLabel:"follow_label",followCount:"follow_count",lastContact:"last_contact",notes:"notes",
+  campaign:"campaign",price:"price",paid:"paid",currency:"currency",dueDate:"due_date",examDate:"exam_date",examTime:"exam_time",result:"result",nextCert:"next_cert"};
+const DATE_F=new Set(["firstMsg","lastMsg","courseStart","followUp","lastContact","dueDate","examDate"]);
+const TIME_F=new Set(["followTime","examTime"]);
+const NUM_F=new Set(["price","paid"]);
+const num=v=>{const n=parseFloat(v);return isNaN(n)?0:n};
+const remaining=r=>Math.max(0,num(r.price)-num(r.paid));
+const fmtMoney=(v,c)=>`${(+v).toLocaleString("en-US",{maximumFractionDigits:2})} ${c||""}`.trim();
+const payDue=r=>remaining(r)>0&&r.dueDate&&r.dueDate<=today();
 
 /* ================= helpers ================= */
 const $=id=>document.getElementById(id);
@@ -353,18 +389,21 @@ function fillSelect(el,opts,blank){el.innerHTML=(blank!==undefined?`<option valu
 
 function fromDb(r){const o={id:r.id};for(const [k,c] of Object.entries(COLS)){let v=r[c];if(v==null)v="";o[k]=v}
   if(o.followTime)o.followTime=String(o.followTime).slice(0,5);
-  o.courseDays=o.courseDays===""?"":String(o.courseDays);o.followCount=+r.follow_count||0;
+  if(o.examTime)o.examTime=String(o.examTime).slice(0,5);
+  o.courseDays=o.courseDays===""?"":String(o.courseDays);
+  o.price=o.price===""?"":String(o.price);o.paid=o.paid===""?"":String(o.paid);if(!o.currency)o.currency="USD";o.followCount=+r.follow_count||0;
   o.createdAt=Date.parse(r.created_at)||0;o.updatedAt=Date.parse(r.updated_at)||0;o.updatedBy=r.updated_by||"";return o}
 function toDb(o){const r={};for(const [k,c] of Object.entries(COLS)){if(!(k in o))continue;let v=o[k];
-  if(DATE_F.has(k)||k==="followTime")v=v?v:null;
+  if(DATE_F.has(k)||TIME_F.has(k))v=v?v:null;
   else if(k==="courseDays")v=v===""||v==null?null:parseInt(v,10)||null;
+  else if(NUM_F.has(k))v=v===""||v==null||isNaN(parseFloat(v))?null:parseFloat(v);
   else if(k==="followCount")v=+v||0;
   else v=v==null?"":String(v);r[c]=v}return r}
 
 /* ================= state ================= */
 let SB=null,session=null,profile=null,TEAM=[],teamById={},rows=[],editingId=null,delArmed=false,autoLabel="",dupOk=false,curLog=[];
 let RULES=JSON.parse(JSON.stringify(DEFAULT_RULES)),TEMPLATES={...DEFAULT_TPL};
-const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",tab:"all",mine:false};
+const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",campaign:"",tab:"all",mine:false};
 const isAdmin=()=>profile&&profile.role==="admin";
 const myName=()=>(profile&&profile.name)||"";
 
@@ -373,7 +412,8 @@ fillSelect($("f_brand"),BRANDS);fillSelect($("f_channel"),CHANNELS);fillSelect($
 fillSelect($("f_status"),STATUSES.map(s=>s[0]));fillSelect($("f_priority"),PRIORITIES);fillSelect($("f_reply"),REPLIES);
 fillSelect($("f_reason"),REASONS,"— مفيش —");
 fillSelect($("fBrand"),BRANDS,"كل الصفحات");fillSelect($("fChannel"),CHANNELS,"كل القنوات");fillSelect($("fType"),TYPES,"كل أنواع الطلب");
-fillSelect($("fReason"),REASONS,"كل أسباب التوقف");fillSelect($("fOwner"),[],"كل المسؤولين");
+fillSelect($("fReason"),REASONS,"كل أسباب التوقف");fillSelect($("fOwner"),[],"كل المسؤولين");fillSelect($("fCampaign"),[],"كل الحملات");
+fillSelect($("f_currency"),CURRENCIES);
 $("countriesList").innerHTML=COUNTRIES.map(c=>`<option value="${c}">`).join("");
 (()=>{const o=[["","— بدون ساعة —"]];for(let h=8;h<24;h++)for(let m=0;m<60;m+=15){const v=`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;o.push([v,fmtTime(v)])}fillSelect($("f_ftime"),o)})();
 function ensureTimeOpt(v){if(v&&![...$("f_ftime").options].some(o=>o.value===v)){const o=document.createElement("option");o.value=v;o.textContent=fmtTime(v);$("f_ftime").appendChild(o)}}
@@ -381,6 +421,8 @@ function fillOwners(cur){const names=[...new Set([...TEAM.map(t=>t.name),cur].fi
 
 /* ================= follow-up rules ================= */
 function autoFollow(r,fromDay){
+  if(r.result==="نجح")return {date:addDays(fromDay||r.examDate||today(),30),label:"بعد النجاح: اعرض الشهادة الجاية"};
+  if(r.result==="رسب")return {date:addDays(fromDay||today(),1),label:"رسب: اعرض إعادة الامتحان"};
   if(isCourse(r.type)&&r.courseStart){
     const days=+r.courseDays||RULES.courseDays,s1=addDays(r.courseStart,days/2),s2=addDays(r.courseStart,days),ref=fromDay||today();
     return ref<s1?{date:s1,label:"كورس: نص المدة (تشجيع)"}:{date:s2>ref?s2:addDays(ref,RULES.noReason),label:"كورس: آخر المدة (عرض الشهادة)"};
@@ -389,19 +431,21 @@ function autoFollow(r,fromDay){
   if(r.reason&&RULES.reasons[r.reason]!=null)return {date:addDays(base,RULES.reasons[r.reason]),label:"حسب السبب: "+r.reason};
   return {date:addDays(base,RULES.noReason),label:"متابعة عامة"};
 }
-function fuState(r){const t=today();if(!r.followUp||CLOSED.includes(r.status))return"";return r.followUp===t?"today":r.followUp<t?"late":"later"}
-function minsTo(r){if(!r.followUp||!r.followTime||CLOSED.includes(r.status))return null;const t=new Date(r.followUp+"T"+r.followTime).getTime();return isNaN(t)?null:(t-Date.now())/60000}
+function fuState(r){const t=today();if(!r.followUp||isClosed(r))return"";return r.followUp===t?"today":r.followUp<t?"late":"later"}
+function minsTo(r){if(!r.followUp||!r.followTime||isClosed(r))return null;const t=new Date(r.followUp+"T"+r.followTime).getTime();return isNaN(t)?null:(t-Date.now())/60000}
 
 /* ================= render ================= */
 function baseFiltered(){const q=view.q.trim().toLowerCase(),me=myName();
   return rows.filter(r=>(!view.mine||(me&&r.owner===me))&&(!view.brand||r.brand===view.brand)&&(!view.channel||r.channel===view.channel)&&(!view.type||r.type===view.type)&&
-    (!view.owner||r.owner===view.owner)&&(!view.reason||r.reason===view.reason)&&
-    (!q||[r.name,r.phone,r.exam,r.summary,r.notes,r.owner,r.country].some(v=>String(v||"").toLowerCase().includes(q))))}
+    (!view.owner||r.owner===view.owner)&&(!view.reason||r.reason===view.reason)&&(!view.campaign||r.campaign===view.campaign)&&
+    (!q||[r.name,r.phone,r.exam,r.summary,r.notes,r.owner,r.country,r.campaign,r.nextCert].some(v=>String(v||"").toLowerCase().includes(q))))}
 function render(){
   const base=baseFiltered(),counts={};STATUSES.forEach(s=>counts[s[0]]=0);base.forEach(r=>counts[r.status]=(counts[r.status]||0)+1);
   const soon=r=>{const m=minsTo(r);return m!==null&&m>0&&m<=60};
   const nSoon=base.filter(soon).length,nToday=base.filter(r=>fuState(r)==="today").length,nLate=base.filter(r=>fuState(r)==="late").length,nNo=base.filter(r=>r.reply==="لا").length;
-  $("kpis").innerHTML=[["all","كل العملاء",base.length,""],["soon","خلال ساعة",nSoon,""],["today","متابعات النهارده",nToday,""],["late","متابعات متأخرة",nLate,nLate?"alert":""],["noreply","لم يتم الرد",nNo,nNo?"alert":""],["booked","تم الحجز",counts["تم الحجز"]||0,""]]
+  const in7=addDays(today(),7),examSoon=r=>r.examDate&&r.examDate>=today()&&r.examDate<=in7;
+  const nPay=base.filter(payDue).length,nExam=base.filter(examSoon).length;
+  $("kpis").innerHTML=[["all","كل العملاء",base.length,""],["soon","خلال ساعة",nSoon,""],["today","متابعات النهارده",nToday,""],["late","متابعات متأخرة",nLate,nLate?"alert":""],["noreply","لم يتم الرد",nNo,nNo?"alert":""],["pay","دفعات مستحقة",nPay,nPay?"alert":""],["exam","امتحانات الأسبوع",nExam,""],["booked","تم الحجز",counts["تم الحجز"]||0,""]]
     .map(([k,l,n,c])=>`<button type="button" class="kpi ${c} ${view.tab===k?"on":""}" data-tab="${k}"><b>${n}</b><span>${l}</span></button>`).join("");
   $("statusChips").innerHTML=`<button type="button" class="chip ${!view.status?"on":""}" data-st="">كل الحالات <em>${base.length}</em></button>`+
     STATUSES.map(([s,k])=>`<button type="button" class="chip ${view.status===s?"on":""}" data-st="${esc(s)}"><i style="background:var(--c-${k})"></i>${esc(s)} <em>${counts[s]||0}</em></button>`).join("");
@@ -411,12 +455,19 @@ function render(){
   if(view.tab==="late")list=list.filter(r=>fuState(r)==="late");
   if(view.tab==="noreply")list=list.filter(r=>r.reply==="لا");
   if(view.tab==="booked")list=list.filter(r=>r.status==="تم الحجز");
+  if(view.tab==="pay")list=list.filter(payDue);
+  if(view.tab==="exam")list=list.filter(examSoon).sort((a,b)=>(a.examDate+a.examTime).localeCompare(b.examDate+b.examTime));
   const rank=r=>({today:0,late:1}[fuState(r)]??2),tm=r=>r.followTime||"99";
-  list.sort((a,b)=>rank(a)-rank(b)||(rank(a)<2?tm(a).localeCompare(tm(b)):0)||(b.createdAt||0)-(a.createdAt||0));
+  if(view.tab!=="exam")list.sort((a,b)=>rank(a)-rank(b)||(rank(a)<2?tm(a).localeCompare(tm(b)):0)||(b.createdAt||0)-(a.createdAt||0));
+  const badges=r=>{const b=[],rem=remaining(r);
+    if(rem>0)b.push(`<span class="bdg money ${payDue(r)?"late":""}" title="${r.dueDate?"ميعاد الدفع "+fmtDate(r.dueDate):""}">💰 ${esc(fmtMoney(rem,r.currency))}${r.dueDate?" · "+fmtDate(r.dueDate):""}</span>`);
+    if(r.examDate)b.push(`<span class="bdg exam">📝 ${fmtDate(r.examDate)}${r.examTime?" "+fmtTime(r.examTime):""}</span>`);
+    if(r.result==="نجح")b.push(`<span class="bdg pass">✓ نجح</span>`);if(r.result==="رسب")b.push(`<span class="bdg fail">✗ رسب</span>`);
+    return b.length?`<div class="badges">${b.join("")}</div>`:""};
   const shown=list.slice(0,500);
   $("tbody").innerHTML=shown.map(r=>{const k=ST[r.status]||"new",fs=fuState(r),okLink=r.link&&/^https?:\/\//i.test(r.link);
     return `<tr class="row" data-id="${esc(r.id)}" style="--dot:var(--c-${k});background:var(--t-${k})">
-      <td><div class="name">${r.priority&&r.priority!=="غير محدد"?`<i class="pdot p-${esc(r.priority)}" title="أولوية ${esc(r.priority)}"></i>`:""}${esc(r.name)}</div><div class="sub mono">${esc(r.phone)}</div></td>
+      <td><div class="name">${r.priority&&r.priority!=="غير محدد"?`<i class="pdot p-${esc(r.priority)}" title="أولوية ${esc(r.priority)}"></i>`:""}${esc(r.name)}</div><div class="sub mono">${esc(r.phone)}</div>${badges(r)}</td>
       <td class="hide-sm"><span class="tag">${esc(r.brand)}</span> <span class="sub">${esc(r.channel)}</span></td>
       <td><div>${esc(r.type)}</div><div class="sub" dir="auto">${esc(r.exam)}</div></td>
       <td class="hide-sm"><div class="summ">${esc(r.summary)}</div></td>
@@ -434,6 +485,8 @@ function render(){
   else if(!list.length){e.hidden=false;e.innerHTML=`<h2>مفيش نتايج</h2>غيّر الفلتر أو البحث.`}else e.hidden=true;
   $("countNote").textContent=rows.length?`معروض ${shown.length} من ${list.length}${list.length>shown.length?" (استخدم البحث أو الفلاتر للباقي)":""} · إجمالي ${rows.length} عميل · الترتيب: متابعات النهارده بالساعة، ثم المتأخرة، ثم الأحدث.`:"";
   const owners=[...new Set([...TEAM.map(t=>t.name),...rows.map(r=>r.owner)].filter(Boolean))].sort(),cur=view.owner;fillSelect($("fOwner"),owners,"كل المسؤولين");$("fOwner").value=cur;
+  const camps=[...new Set(rows.map(r=>r.campaign).filter(Boolean))].sort();fillSelect($("fCampaign"),camps,"كل الحملات");$("fCampaign").value=view.campaign;
+  $("campaignsList").innerHTML=camps.map(c=>`<option value="${esc(c)}">`).join("");
   const me=myName();$("mineBtn").hidden=!me;$("mineBtn").classList.toggle("on",view.mine);$("mineBtn").textContent=`👤 عملائي (${rows.filter(r=>me&&r.owner===me).length})`;
 }
 
@@ -442,7 +495,7 @@ $("kpis").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if
 $("statusChips").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;view.status=b.dataset.st;render()});
 $("q").addEventListener("input",e=>{view.q=e.target.value;render()});
 $("mineBtn").onclick=()=>{view.mine=!view.mine;render()};
-[["fBrand","brand"],["fChannel","channel"],["fType","type"],["fOwner","owner"],["fReason","reason"]].forEach(([id,k])=>$(id).addEventListener("change",e=>{view[k]=e.target.value;render()}));
+[["fBrand","brand"],["fChannel","channel"],["fType","type"],["fOwner","owner"],["fReason","reason"],["fCampaign","campaign"]].forEach(([id,k])=>$(id).addEventListener("change",e=>{view[k]=e.target.value;render()}));
 $("tbody").addEventListener("change",async e=>{const s=e.target.closest(".stsel");if(!s)return;
   try{await updateLead(s.dataset.id,{status:s.value});await addLog(s.dataset.id,"status",`الحالة: ${s.value}`);toast("اتغيرت الحالة")}catch(err){toast(errMsg(err));render()}});
 $("tbody").addEventListener("click",e=>{if(e.target.closest(".stsel,a"))return;const tr=e.target.closest("tr.row");if(tr)openDlg(tr.dataset.id)});
@@ -472,7 +525,15 @@ function subscribe(){
 }
 
 /* ================= form ================= */
-const F={name:"f_name",phone:"f_phone",country:"f_country",brand:"f_brand",channel:"f_channel",owner:"f_owner",type:"f_type",exam:"f_exam",status:"f_status",priority:"f_priority",reply:"f_reply",reason:"f_reason",firstMsg:"f_first",lastMsg:"f_last",link:"f_link",summary:"f_summary",courseStart:"f_cstart",courseDays:"f_cdays",followUp:"f_follow",followTime:"f_ftime",notes:"f_notes"};
+const F={name:"f_name",phone:"f_phone",country:"f_country",brand:"f_brand",channel:"f_channel",owner:"f_owner",type:"f_type",exam:"f_exam",status:"f_status",priority:"f_priority",reply:"f_reply",reason:"f_reason",firstMsg:"f_first",lastMsg:"f_last",link:"f_link",summary:"f_summary",courseStart:"f_cstart",courseDays:"f_cdays",followUp:"f_follow",followTime:"f_ftime",notes:"f_notes",
+  campaign:"f_campaign",price:"f_price",paid:"f_paid",currency:"f_currency",dueDate:"f_due",examDate:"f_examDate",examTime:"f_examTime",result:"f_result",nextCert:"f_nextCert"};
+function updRemain(){const d=formData(),rem=remaining(d),o=$("remainOut");
+  o.textContent=num(d.price)?(rem>0?fmtMoney(rem,d.currency):"مدفوع بالكامل ✓"):"—";o.classList.toggle("due",payDue(d))}
+["f_price","f_paid","f_currency","f_due"].forEach(id=>$(id).addEventListener("input",updRemain));
+$("f_result").addEventListener("change",()=>{const d=formData();if(!d.result)return;
+  const a=autoFollow(d);$("f_follow").value=a.date;$("f_ftime").value="";setAuto(a.label);
+  const k=tplKeyFor({...d,followLabel:a.label});$("tplSel").value=k;$("tplText").value=tplText(k,d);
+  toast(d.result==="نجح"?"اتحدد ميعاد متابعة بعد شهر لعرض الشهادة الجاية":"اتحدد ميعاد متابعة بكرة لعرض إعادة الامتحان")});
 function formData(){const d={};for(const [k,el] of Object.entries(F))d[k]=$(el).value.trim();return d}
 function setAuto(l){autoLabel=l||"";$("autoNote").textContent=autoLabel}
 function toggleCourse(){const c=isCourse($("f_type").value);$("lb_cstart").hidden=!c;$("lb_cdays").hidden=!c;if(c&&!$("f_cdays").value)$("f_cdays").value=RULES.courseDays}
@@ -490,8 +551,8 @@ async function openDlg(id){
   const r=id?rows.find(x=>x.id===id):{brand:BRANDS[0],channel:"WhatsApp",type:"حجز اختبار",status:"جديد",priority:"متوسطة",reply:"لا",firstMsg:today(),lastMsg:today(),owner:myName()};
   if(!r)return;
   fillOwners(r.owner);
-  for(const [k,el] of Object.entries(F)){if(k==="owner")continue;const v=r[k]??"";if(el==="f_ftime")ensureTimeOpt(v);$(el).value=v}
-  setAuto(r.followLabel);toggleCourse();
+  for(const [k,el] of Object.entries(F)){if(k==="owner")continue;let v=r[k]??"";if(k==="currency"&&!v)v="USD";if(el==="f_ftime")ensureTimeOpt(v);$(el).value=v}
+  setAuto(r.followLabel);toggleCourse();updRemain();
   $("dlgTitle").textContent=id?"تعديل: "+(r.name||""):"عميل جديد";
   $("delBtn").hidden=!id;$("delBtn").textContent="حذف";
   $("logSec").hidden=!id;$("logWrap").hidden=!id;$("logNote").value="";
@@ -510,7 +571,7 @@ $("saveBtn").onclick=async()=>{
   if(!data.name){$("f_name").focus();toast("اكتب اسم العميل");return}
   if(!dupOk&&checkDup()){$("dupBox").scrollIntoView({block:"center"});toast("الرقم ده موجود قبل كده");return}
   if(!isCourse(data.type)){data.courseStart="";data.courseDays=""}
-  if(!data.followUp&&!CLOSED.includes(data.status)){const a=autoFollow(data);data.followUp=a.date;setAuto(a.label)}
+  if(!data.followUp&&!isClosed(data)){const a=autoFollow(data);data.followUp=a.date;setAuto(a.label)}
   data.followLabel=data.followUp?autoLabel:"";
   const old=editingId?rows.find(x=>x.id===editingId):null;
   $("saveBtn").disabled=true;
@@ -520,7 +581,7 @@ $("saveBtn").onclick=async()=>{
     closeDlg();toast(old?"اتحفظت التعديلات":"اتضاف العميل");checkReminders();
   }catch(err){toast(errMsg(err))}finally{$("saveBtn").disabled=false}};
 async function markDone(id,note){const r=rows.find(x=>x.id===id);if(!r)return false;
-  const a=CLOSED.includes(r.status)?{date:"",label:""}:autoFollow({...r},today());
+  const a=isClosed(r)?{date:"",label:""}:autoFollow({...r},today());
   try{const n=await updateLead(id,{followCount:(r.followCount||0)+1,lastContact:today(),reply:"نعم",followUp:a.date,followTime:"",followLabel:a.label});
     await addLog(id,"follow",note||"تمت المتابعة");
     toast(a.date?`اتسجلت المتابعة · الجاية ${fmtDate(a.date)}`:"اتسجلت المتابعة");return n}catch(e){toast(errMsg(e));return false}}
@@ -549,13 +610,17 @@ $("dupBox").addEventListener("click",e=>{const a=e.target.dataset.dup;if(!a)retu
 
 /* ================= templates ================= */
 function tplKeyFor(r){const l=(r&&r.followLabel)||"";
+  if(r&&payDue(r))return"payment";
+  if(l.startsWith("بعد النجاح")||(r&&r.result==="نجح"))return"upsell";if(l.startsWith("رسب")||(r&&r.result==="رسب"))return"retake";
   if(l.startsWith("كورس: نص"))return"course1";if(l.startsWith("كورس: آخر"))return"course2";
   if(r&&REASONS.includes(r.reason))return r.reason;if(r&&r.status==="جاهز للحجز")return"ready";return"general"}
-function tplText(key,r){const first=(r.name||"").trim().split(/\s+/)[0]||"";return (TEMPLATES[key]||DEFAULT_TPL[key]||DEFAULT_TPL.general).replaceAll("{name}",first).replaceAll("{exam}",r.exam||"الاختبار")}
+function tplText(key,r){const first=(r.name||"").trim().split(/\s+/)[0]||"";return (TEMPLATES[key]||DEFAULT_TPL[key]||DEFAULT_TPL.general)
+  .replaceAll("{name}",first).replaceAll("{exam}",r.exam||"الاختبار").replaceAll("{next}",r.nextCert||"الشهادة اللي بعدها")
+  .replaceAll("{remaining}",remaining(r)?fmtMoney(remaining(r),r.currency):"المبلغ").replaceAll("{due}",r.dueDate?fmtDate(r.dueDate):"قريب")}
 function pickTemplate(r){$("tplSel").innerHTML=TPL_KEYS.map(([k,l])=>`<option value="${esc(k)}">${esc(l)}</option>`).join("");
   const k=tplKeyFor(r);$("tplSel").value=k;$("tplText").value=tplText(k,formData())}
 $("tplSel").addEventListener("change",()=>{$("tplText").value=tplText($("tplSel").value,formData())});
-["f_reason","f_status"].forEach(id=>$(id).addEventListener("change",()=>{const k=tplKeyFor({...formData(),followLabel:autoLabel});$("tplSel").value=k;$("tplText").value=tplText(k,formData())}));
+["f_reason","f_status","f_due","f_paid"].forEach(id=>$(id).addEventListener("change",()=>{const k=tplKeyFor({...formData(),followLabel:autoLabel});$("tplSel").value=k;$("tplText").value=tplText(k,formData())}));
 async function copyText(t,okMsg){try{await navigator.clipboard.writeText(t);toast(okMsg);return true}catch(e){return false}}
 $("tplCopy").onclick=async()=>{if(!(await copyText($("tplText").value,"اتنسخت الرسالة"))){$("tplText").focus();$("tplText").select();toast("اضغط Ctrl+C للنسخ")}};
 
@@ -568,11 +633,18 @@ function groupBy(list,key){const m={};list.forEach(r=>{const k=r[key]||"غير �
 async function renderReports(){const days=+$("repPeriod").value,from=days?Date.now()-days*864e5:0;
   const list=rows.filter(r=>(r.createdAt||0)>=from),booked=list.filter(r=>r.status==="تم الحجز").length,open=list.filter(r=>!CLOSED.includes(r.status));
   let follows="…";
+  const byCur=f=>{const m={};list.forEach(r=>{const v=f(r);if(v>0)m[r.currency||"USD"]=(m[r.currency||"USD"]||0)+v});return Object.entries(m).map(([c,v])=>fmtMoney(v,c)).join(" + ")||"0"};
+  const allRem={};rows.forEach(r=>{const v=remaining(r);if(v>0)allRem[r.currency||"USD"]=(allRem[r.currency||"USD"]||0)+v});
+  const passN=list.filter(r=>r.result==="نجح").length,failN=list.filter(r=>r.result==="رسب").length;
   const draw=()=>{$("repBody").innerHTML=`<div class="rep-kpis"><div><b>${list.length}</b><span>عملاء جداد</span></div><div><b>${booked}</b><span>تم الحجز</span></div>
     <div><b>${list.length?Math.round(booked/list.length*100):0}%</b><span>نسبة التحويل</span></div><div><b>${follows}</b><span>متابعات اتعملت</span></div>
     <div><b>${open.length}</b><span>لسه مفتوحين</span></div></div>
+    <div class="rep-kpis"><div><b style="font-size:17px">${esc(byCur(r=>num(r.paid)))}</b><span>المحصّل (من عملاء الفترة)</span></div>
+    <div><b style="font-size:17px">${esc(Object.entries(allRem).map(([c,v])=>fmtMoney(v,c)).join(" + ")||"0")}</b><span>متبقي عند كل العملاء</span></div>
+    <div><b>${rows.filter(payDue).length}</b><span>دفعات مستحقة دلوقتي</span></div>
+    <div><b>${passN} / ${failN}</b><span>نجح / رسب</span></div></div>
     <p class="sub" style="margin:0">الأزرق = عدد العملاء، والأخضر = اللي اتحجزلهم. محسوب على العملاء اللي اتضافوا في الفترة المختارة.</p>
-    <div class="rep-grid">${bars("حسب القناة",groupBy(list,"channel"),true)}${bars("حسب نوع الطلب",groupBy(list,"type"),true)}
+    <div class="rep-grid">${bars("حسب الحملة الإعلانية",groupBy(list,"campaign").slice(0,10),true)}${bars("حسب القناة",groupBy(list,"channel"),true)}${bars("حسب نوع الطلب",groupBy(list,"type"),true)}
     ${bars("حسب الصفحة",groupBy(list,"brand"),true)}${bars("حسب المسؤول",groupBy(list,"owner"),true)}
     ${bars("أكتر أسباب التوقف (للمفتوحين)",groupBy(open.filter(r=>r.reason),"reason"),false)}${bars("أكتر الاختبارات المطلوبة",groupBy(list.filter(r=>r.exam),"exam").slice(0,8),true)}</div>`};
   draw();
@@ -590,7 +662,7 @@ function renderSettings(){const adm=isAdmin();
       :`<span class="sub">${(ROLES.find(r=>r[0]===t.role)||ROLES[0])[1]}</span>`}${t.id===session.user.id?`<span class="sub">· انت</span>`:""}</div>`).join("")+
     (adm?`<span class="quick"><button type="button" id="saveTeam">حفظ أسماء الفريق</button></span>`:"");
   if(adm)$("saveTeam").onclick=saveTeam;
-  $("tplBox").innerHTML=`<h3>الرسايل الجاهزة</h3><p class="sub" style="grid-column:1/-1;margin:0">اكتب {name} مكان اسم العميل و {exam} مكان اسم الاختبار، وهيتبدلوا لوحدهم.</p>`+
+  $("tplBox").innerHTML=`<h3>الرسايل الجاهزة</h3><p class="sub" style="grid-column:1/-1;margin:0">اكتب {name} مكان اسم العميل، و{exam} مكان الاختبار، و{next} مكان الشهادة الجاية، و{remaining} مكان المبلغ المتبقي، و{due} مكان ميعاد الدفع.</p>`+
     TPL_KEYS.map(([k,l],i)=>`<label class="full">${esc(l)}<textarea id="tpl_${i}" rows="3" ${adm?"":"disabled"}>${esc(TEMPLATES[k]||"")}</textarea></label>`).join("");
   $("rulesBox").innerHTML=`<h3>قواعد المتابعة (أيام بعد آخر رسالة)</h3>`+
     REASONS.map((r,i)=>`<label>${esc(r)}<input type="number" min="0" id="rule_${i}" value="${RULES.reasons[r]??""}" ${adm?"":"disabled"}></label>`).join("")+
@@ -614,7 +686,7 @@ $("saveRules").onclick=async()=>{RULES=readRulesForm();const items={};TPL_KEYS.f
   try{const {error}=await SB.from("config").upsert([{key:"rules",value:RULES,updated_at:new Date().toISOString()},{key:"templates",value:items,updated_at:new Date().toISOString()}]);if(error)throw error;
     $("rulesDlg").close();toast("اتحفظت القواعد والرسايل للفريق كله")}catch(e){toast(errMsg(e))}};
 $("applyRules").onclick=async()=>{RULES=readRulesForm();let n=0;
-  for(const r of rows.filter(r=>!r.followUp&&!CLOSED.includes(r.status))){const a=autoFollow(r);try{await updateLead(r.id,{followUp:a.date,followLabel:a.label});n++}catch(e){}}
+  for(const r of rows.filter(r=>!r.followUp&&!isClosed(r))){const a=autoFollow(r);try{await updateLead(r.id,{followUp:a.date,followLabel:a.label});n++}catch(e){}}
   toast(`اتحدد ميعاد متابعة لـ ${n} عميل`)};
 
 /* ================= reminders ================= */
@@ -653,8 +725,12 @@ $("testRem").onclick=()=>{unlockAudio();askNotify();const t=new Date(Date.now()+
 function askNotify(){try{if("Notification" in window&&Notification.permission==="default")Notification.requestPermission()}catch(e){}}
 
 /* ================= CSV ================= */
-const HEAD={name:"الاسم",phone:"الموبايل",country:"الدولة",brand:"الصفحة",channel:"القناة",owner:"المسؤول",type:"نوع الطلب",exam:"اسم الاختبار",status:"حالة العميل",priority:"الأولوية",reply:"تم الرد",reason:"سبب التوقف",firstMsg:"أول رسالة",lastMsg:"تاريخ آخر رسالة",link:"رابط المحادثة",summary:"ملخص المحادثة",courseStart:"بداية الكورس",courseDays:"مدة الكورس",followUp:"موعد Follow Up",followTime:"الساعة Follow Up",notes:"ملاحظات"};
-const ALIASES={name:["name","الاسم","اسم العميل"],phone:["phone","الموبايل","رقم","الرقم","واتساب","رقم الموبايل"],country:["country","الدولة","الدوله"],brand:["brand","page","الصفحة"],channel:["channel","القناة","القناه"],owner:["owner","المسؤول"],type:["type","نوع الطلب"],exam:["exam","الامتحان","اسم الاختبار","الكورس"],status:["status","الحالة","حالة العميل"],priority:["priority","الأولوية"],reply:["reply","الرد","تم الرد","هل تم الرد؟","هل تم الرد"],reason:["reason","سبب التوقف","السبب"],firstMsg:["first message","أول رسالة"],lastMsg:["last message","آخر رسالة","تاريخ آخر رسالة"],link:["link","رابط المحادثة","لينك المحادثة"],summary:["summary","ملخص المحادثة","الملخص"],courseStart:["course start","بداية الكورس"],courseDays:["course days","مدة الكورس"],followUp:["follow up","موعد follow up","المتابعة","ميعاد المتابعة"],followTime:["follow time","الساعه follow up","الساعة follow up","ساعة المتابعة"],notes:["notes","ملاحظات"]};
+const HEAD={name:"الاسم",phone:"الموبايل",country:"الدولة",brand:"الصفحة",channel:"القناة",owner:"المسؤول",type:"نوع الطلب",exam:"اسم الاختبار",status:"حالة العميل",priority:"الأولوية",reply:"تم الرد",reason:"سبب التوقف",firstMsg:"أول رسالة",lastMsg:"تاريخ آخر رسالة",link:"رابط المحادثة",summary:"ملخص المحادثة",courseStart:"بداية الكورس",courseDays:"مدة الكورس",followUp:"موعد Follow Up",followTime:"الساعة Follow Up",notes:"ملاحظات",
+  campaign:"الحملة",price:"السعر",paid:"المدفوع",currency:"العملة",dueDate:"ميعاد الدفع",examDate:"تاريخ الامتحان",examTime:"ساعة الامتحان",result:"النتيجة",nextCert:"الشهادة الجاية"};
+const ALIASES={name:["name","الاسم","اسم العميل"],phone:["phone","الموبايل","رقم","الرقم","واتساب","رقم الموبايل"],country:["country","الدولة","الدوله"],brand:["brand","page","الصفحة"],channel:["channel","القناة","القناه"],owner:["owner","المسؤول"],type:["type","نوع الطلب"],exam:["exam","الامتحان","اسم الاختبار","الكورس"],status:["status","الحالة","حالة العميل"],priority:["priority","الأولوية"],reply:["reply","الرد","تم الرد","هل تم الرد؟","هل تم الرد"],reason:["reason","سبب التوقف","السبب"],firstMsg:["first message","أول رسالة"],lastMsg:["last message","آخر رسالة","تاريخ آخر رسالة"],link:["link","رابط المحادثة","لينك المحادثة"],summary:["summary","ملخص المحادثة","الملخص"],courseStart:["course start","بداية الكورس"],courseDays:["course days","مدة الكورس"],followUp:["follow up","موعد follow up","المتابعة","ميعاد المتابعة"],followTime:["follow time","الساعه follow up","الساعة follow up","ساعة المتابعة"],notes:["notes","ملاحظات"],
+  campaign:["campaign","الحملة","الحملة الإعلانية","الاعلان","الإعلان"],price:["price","السعر"],paid:["paid","المدفوع"],currency:["currency","العملة"],
+  dueDate:["due date","ميعاد الدفع","ميعاد دفع المتبقي"],examDate:["exam date","تاريخ الامتحان","ميعاد الامتحان"],examTime:["exam time","ساعة الامتحان"],
+  result:["result","النتيجة"],nextCert:["next cert","الشهادة الجاية"]};
 function parseCSV(t){const out=[];let row=[],f="",q=false;t=t.replace(/^﻿/,"");
   for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
     else if(c==='"')q=true;else if(c===","){row.push(f);f=""}else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);out.push(row);row=[];f=""}else f+=c}
@@ -668,9 +744,11 @@ $("importFile").onchange=async e=>{const file=e.target.files[0];e.target.value="
   for(const [k,al] of Object.entries(ALIASES)){const i=head.findIndex(h=>al.some(a=>h===a.toLowerCase()));if(i>=0)idx[k]=i}
   if(idx.name===undefined){toast("مش لاقي عمود «الاسم» في الملف");return}
   let items=grid.slice(1).map(r=>{const d={};for(const k of Object.keys(F))d[k]=idx[k]!==undefined?(r[idx[k]]||"").trim():"";
-    ["firstMsg","lastMsg","followUp","courseStart"].forEach(k=>d[k]=normDate(d[k]));d.followTime=normTime(d.followTime);
+    ["firstMsg","lastMsg","followUp","courseStart","dueDate","examDate"].forEach(k=>d[k]=normDate(d[k]));d.followTime=normTime(d.followTime);d.examTime=normTime(d.examTime);
+    ["price","paid"].forEach(k=>d[k]=String(d[k]||"").replace(/[^\d.]/g,""));d.currency=CURRENCIES.includes((d.currency||"").toUpperCase())?d.currency.toUpperCase():"USD";
+    if(!["نجح","رسب"].includes(d.result))d.result="";
     if(!ST[d.status])d.status=d.status||"جديد";if(!REPLIES.includes(d.reply))d.reply="غير محدد";if(!REASONS.includes(d.reason))d.reason="";
-    if(!d.followUp&&!CLOSED.includes(d.status)){const a=autoFollow(d);d.followUp=a.date;d.followLabel=a.label}else d.followLabel=d.followUp?"ميعاد محدد":"";
+    if(!d.followUp&&!isClosed(d)){const a=autoFollow(d);d.followUp=a.date;d.followLabel=a.label}else d.followLabel=d.followUp?"ميعاد محدد":"";
     return d}).filter(d=>d.name);
   const seen=new Set(rows.map(r=>phoneKey(r.phone)).filter(k=>k.length>=8));let skipped=0;
   items=items.filter(d=>{const k=phoneKey(d.phone);if(k.length>=8&&seen.has(k)){skipped++;return false}if(k.length>=8)seen.add(k);return true});
