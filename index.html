@@ -263,6 +263,7 @@ textarea{min-height:70px;resize:vertical}
     <button class="primary" type="button" id="saveBtn">حفظ</button>
     <button type="button" id="cancelBtn">إلغاء</button>
     <span class="grow"></span>
+    <a id="openWa" class="btn" target="_blank" rel="noopener" hidden>واتساب ↗</a>
     <a id="openLink" class="btn" target="_blank" rel="noopener" hidden>فتح المحادثة في Meta ↗</a>
     <button type="button" class="danger" id="delBtn" hidden>حذف</button>
   </div>
@@ -340,6 +341,7 @@ const fmtTime=t=>{if(!t)return"";let [h,m]=t.split(":").map(Number);const s=h<12
 const hhmm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 function ago(ms){if(!ms)return"";const m=Math.round((Date.now()-ms)/60000);if(m<1)return"دلوقتي";if(m<60)return`من ${m} د`;const h=Math.round(m/60);if(h<24)return`من ${h} س`;const d=Math.round(h/24);return d<30?`من ${d} يوم`:new Date(ms).toLocaleDateString("ar-EG")}
 const phoneKey=p=>String(p||"").replace(/\D/g,"").slice(-9);
+function waLink(p){let d=String(p||"").replace(/\D/g,"");if(d.startsWith("00"))d=d.slice(2);if(d.startsWith("0")&&d.length===11)d="2"+d;return d.length>=8?"https://wa.me/"+d:""}
 function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2800)}
 function banner(msg){$("banner").textContent=msg||"";$("banner").hidden=!msg}
 function errMsg(e){const m=(e&&(e.message||e.error_description))||"";
@@ -425,7 +427,7 @@ function render(){
       <td class="hide-sm reply-${esc(r.reply)}">${esc(r.reply)}</td>
       <td><select class="stsel" data-id="${esc(r.id)}" aria-label="الحالة">${STATUSES.map(s=>`<option ${s[0]===r.status?"selected":""}>${s[0]}</option>`).join("")}</select></td>
       <td class="hide-sm"><div class="sub">${ago(r.updatedAt)}</div><div class="sub">${esc((teamById[r.updatedBy]||{}).name||"")}</div></td>
-      <td class="hide-sm">${okLink?`<a class="btn linkbtn" href="${esc(r.link)}" target="_blank" rel="noopener" title="فتح المحادثة في Meta">Meta ↗</a>`:""}</td>
+      <td class="hide-sm"><span class="quick">${waLink(r.phone)?`<a class="btn linkbtn" href="${waLink(r.phone)}" target="_blank" rel="noopener" title="فتح واتساب العميل">واتساب ↗</a>`:""}${okLink?`<a class="btn linkbtn" href="${esc(r.link)}" target="_blank" rel="noopener" title="فتح المحادثة في Meta">Meta ↗</a>`:""}</span></td>
     </tr>`}).join("");
   const e=$("empty");
   if(!rows.length){e.hidden=false;e.innerHTML=`<h2>لسه مفيش عملاء</h2>أضف أول عميل من «+ عميل جديد»، أو استورد شيت من «استيراد CSV».`}
@@ -494,6 +496,7 @@ async function openDlg(id){
   $("delBtn").hidden=!id;$("delBtn").textContent="حذف";
   $("logSec").hidden=!id;$("logWrap").hidden=!id;$("logNote").value="";
   const ok=r.link&&/^https?:\/\//i.test(r.link);$("openLink").hidden=!ok;if(ok)$("openLink").href=r.link;
+  const wa=waLink(r.phone);$("openWa").hidden=!wa;if(wa)$("openWa").href=wa;
   $("metaLine").textContent=id?`اتضاف ${r.createdAt?new Date(r.createdAt).toLocaleDateString("ar-EG"):""} · آخر تحديث ${ago(r.updatedAt)}${(teamById[r.updatedBy]||{}).name?" بواسطة "+teamById[r.updatedBy].name:""}${r.followCount?` · اتتابع ${r.followCount} مرة، آخرها ${fmtDate(r.lastContact)}`:""}`:"";
   dupOk=false;checkDup();pickTemplate(r);
   curLog=[];renderLog();
@@ -540,7 +543,7 @@ function checkDup(){const k=phoneKey($("f_phone").value),box=$("dupBox");
   box.hidden=false;box.innerHTML=`<span>⚠️ الرقم ده موجود قبل كده باسم «${esc(d.name)}» · ${esc(d.channel||"")} · ${esc(d.status||"")}</span>
     <button type="button" data-dup="open">افتح العميل الموجود</button><button type="button" data-dup="ok">احفظ برضه</button>`;
   box.dataset.id=d.id;return true}
-$("f_phone").addEventListener("change",()=>{dupOk=false;checkDup()});
+$("f_phone").addEventListener("change",()=>{dupOk=false;checkDup();const wa=waLink($("f_phone").value);$("openWa").hidden=!wa;if(wa)$("openWa").href=wa});
 $("dupBox").addEventListener("click",e=>{const a=e.target.dataset.dup;if(!a)return;
   if(a==="ok"){dupOk=true;$("dupBox").hidden=true}else{const id=$("dupBox").dataset.id;closeDlg();openDlg(id)}});
 
@@ -635,6 +638,7 @@ function showReminder(r,mins,test){
       <button type="button" class="rem-x" data-a="close" aria-label="إغلاق">✕</button></div>
     ${r.summary?`<div class="sub">${esc(r.summary)}</div>`:""}
     <div class="acts">${test?"":`<button type="button" class="okbtn" data-a="done">✓ تابعت</button><button type="button" data-a="copy">نسخ الرسالة</button><button type="button" data-a="snooze">أجّل 15 د</button><button type="button" data-a="open">فتح العميل</button>`}
+      ${waLink(r.phone)?`<a class="btn" href="${waLink(r.phone)}" target="_blank" rel="noopener">واتساب ↗</a>`:""}
       ${r.link&&/^https?:\/\//i.test(r.link)?`<a class="btn" href="${esc(r.link)}" target="_blank" rel="noopener">Meta ↗</a>`:""}</div>`;
   box.addEventListener("click",async e=>{const a=e.target.closest("[data-a]")?.dataset.a;if(!a)return;
     if(a==="copy"){if(!(await copyText(tplText(tplKeyFor(r),r),"اتنسخت رسالة المتابعة")))toast("افتح العميل وانسخ الرسالة من هناك");return}
