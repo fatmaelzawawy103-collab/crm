@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CRM العملاء</title>
 <meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5eff">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="CRM">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
@@ -42,6 +50,7 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
 .okbtn{background:var(--ok);color:#fff;border-color:var(--ok)}
 .danger{color:var(--warn)}
 .who{font-weight:700;color:var(--muted);font-size:13px}
+.warnbtn{background:var(--t-price);border-color:var(--c-price);color:var(--ink)}
 main .wrap{padding-block:16px 40px;display:grid;gap:14px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:start;display:block}
@@ -191,6 +200,7 @@ textarea{min-height:70px;resize:vertical}
   <button id="exportBtn" type="button">تصدير CSV</button>
   <button id="reportsBtn" type="button">التقارير</button>
   <button id="rulesBtn" type="button">الإعدادات</button>
+  <button id="soundBtn" type="button" class="warnbtn">🔇 اضغطي لتشغيل الصوت</button>
   <button id="testRem" type="button">جرّب التنبيه</button>
   <button id="addBtn" class="primary" type="button">+ عميل جديد</button>
 </div></header>
@@ -690,12 +700,18 @@ $("applyRules").onclick=async()=>{RULES=readRulesForm();let n=0;
 
 /* ================= reminders ================= */
 let audioCtx=null;
-function unlockAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume()}catch(e){}}
+function soundOn(){return !!audioCtx&&audioCtx.state==="running"}
+function showSound(){const b=$("soundBtn");if(!b)return;const on=soundOn();b.textContent=on?"🔊 الصوت شغال":"🔇 اضغطي لتشغيل الصوت";b.classList.toggle("warnbtn",!on)}
+function unlockAudio(){try{if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended")audioCtx.resume().then(showSound,showSound);else showSound()}catch(e){}}
 addEventListener("pointerdown",unlockAudio);addEventListener("keydown",unlockAudio);
-function beep(){try{unlockAudio();if(!audioCtx)return;const t=audioCtx.currentTime;
-  [[880,0],[660,.18],[880,.36],[1046,.6]].forEach(([f,o])=>{const osc=audioCtx.createOscillator(),g=audioCtx.createGain();osc.frequency.value=f;
-    g.gain.setValueAtTime(.0001,t+o);g.gain.exponentialRampToValueAtTime(.25,t+o+.02);g.gain.exponentialRampToValueAtTime(.0001,t+o+.18);
-    osc.connect(g).connect(audioCtx.destination);osc.start(t+o);osc.stop(t+o+.2)})}catch(e){}}
+/* نغمة أعلى وأطول: بتتكرر 3 مرات (حوالي 3 ثواني) */
+function beep(){try{unlockAudio();if(!audioCtx)return;const t0=audioCtx.currentTime+.05;
+  for(let rep=0;rep<3;rep++){const t=t0+rep*1.1;
+    [[988,0],[784,.16],[988,.32],[1319,.5]].forEach(([f,o])=>{const osc=audioCtx.createOscillator(),g=audioCtx.createGain();osc.type="triangle";osc.frequency.value=f;
+      g.gain.setValueAtTime(.0001,t+o);g.gain.exponentialRampToValueAtTime(.7,t+o+.02);g.gain.exponentialRampToValueAtTime(.0001,t+o+.3);
+      osc.connect(g).connect(audioCtx.destination);osc.start(t+o);osc.stop(t+o+.32)})}}catch(e){}}
+setInterval(showSound,3000);
 const notified=(()=>{try{return JSON.parse(localStorage.getItem("crm_notified")||"{}")}catch(e){return{}}})();
 function markNotified(k){notified[k]=Date.now();try{localStorage.setItem("crm_notified",JSON.stringify(notified))}catch(e){}}
 const baseTitle=document.title;let flash=null,pending=0;
@@ -721,6 +737,7 @@ function showReminder(r,mins,test,exam){
 }
 function minsToExam(r){if(!r.examDate||!r.examTime||r.status==="غير مهتم")return null;const t=new Date(r.examDate+"T"+r.examTime).getTime();return isNaN(t)?null:(t-Date.now())/60000}
 function checkReminders(){rows.forEach(r=>{const e=minsToExam(r);if(e!==null&&e>0&&e<=10){const k="exam|"+r.id+"|"+r.examDate+"|"+r.examTime;if(!notified[k]){markNotified(k);showReminder({...r,followTime:r.examTime},Math.max(1,Math.ceil(e)),false,true)}}});rows.forEach(r=>{const m=minsTo(r);if(m===null||m<=0||m>10)return;const k=r.id+"|"+r.followUp+"|"+r.followTime;if(notified[k])return;markNotified(k);showReminder(r,Math.max(1,Math.ceil(m)))})}
+$("soundBtn").onclick=()=>{unlockAudio();setTimeout(()=>{showSound();if(soundOn()){beep();toast("الصوت شغال ✓ سيبي الصفحة مفتوحة")}},150)};
 $("testRem").onclick=()=>{unlockAudio();askNotify();const t=new Date(Date.now()+10*60000);showReminder({name:"عميل تجريبي",phone:"+20 100 000 0000",exam:"AZ-104",channel:"WhatsApp",summary:"ده شكل التنبيه اللي هيطلعلك قبل الميعاد بـ 10 دقايق.",followTime:hhmm(t)},10,true)};
 function askNotify(){try{if("Notification" in window&&Notification.permission==="default")Notification.requestPermission()}catch(e){}}
 
@@ -764,6 +781,7 @@ $("exportBtn").onclick=()=>{const keys=Object.keys(HEAD);
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)};
 
 /* ================= boot ================= */
+if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(()=>{})}
 function showWho(){$("whoAmI").textContent=profile?`${profile.name||session.user.email}${isAdmin()?" · أدمن":""}`:session.user.email}
 async function startApp(){
   $("loginView").hidden=true;$("appView").hidden=false;
