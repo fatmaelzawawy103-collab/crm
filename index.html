@@ -77,6 +77,8 @@ td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
 tr.row{cursor:pointer}
 tr.row:hover td{filter:brightness(.97)}
 tr.row td:first-child{border-inline-start:4px solid var(--dot)}
+.num{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:center;width:44px;font-variant-numeric:tabular-nums}
+@media (max-width:720px){tr.row td.num{grid-column:1/-1;text-align:start;width:auto}}
 .name{font-weight:700;display:flex;gap:6px;align-items:center}
 .pdot{width:8px;height:8px;border-radius:50%;flex:none}
 .p-عالية{background:var(--warn)} .p-متوسطة{background:var(--c-think)} .p-منخفضة{background:var(--c-new)}
@@ -218,12 +220,14 @@ textarea{min-height:70px;resize:vertical}
     <input type="search" id="q" placeholder="بحث بالاسم، الرقم، الاختبار، الملخص…">
     <select id="fBrand"></select><select id="fChannel"></select><select id="fType"></select>
     <select id="fReason"></select><select id="fCampaign"></select><select id="fOwner"></select>
+    <select id="fYear" aria-label="السنة"></select>
+    <select id="fSort" aria-label="الترتيب"><option value="lastDesc">ترتيب: آخر رسالة (الأحدث الأول)</option><option value="lastAsc">ترتيب: آخر رسالة (الأقدم الأول)</option><option value="follow">ترتيب: ميعاد المتابعة</option><option value="added">ترتيب: الأحدث إضافة</option></select>
   </div>
   <div class="chips" id="statusChips"></div>
   <div class="tablebox">
     <table>
       <thead><tr>
-        <th>العميل</th><th>الصفحة / القناة</th><th>الطلب</th><th>ملخص المحادثة</th><th>الدولة</th>
+        <th>#</th><th>العميل</th><th>الصفحة / القناة</th><th>الطلب</th><th>ملخص المحادثة</th><th>الدولة</th>
         <th>آخر رسالة</th><th>المتابعة</th><th>سبب التوقف</th><th>تم الرد؟</th><th>الحالة</th><th>آخر تحديث</th><th></th>
       </tr></thead>
       <tbody id="tbody"></tbody>
@@ -388,7 +392,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const ymd=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 const today=()=>ymd(new Date());
 const addDays=(d,n)=>{const x=new Date((d||today())+"T12:00:00");x.setDate(x.getDate()+Math.round(n));return ymd(x)};
-const fmtDate=s=>{if(!s)return"";const [y,m,d]=s.split("-");return d+"/"+m};
+const fmtDate=s=>{if(!s)return"";const [y,m,d]=s.split("-");return d+"/"+m+(+y!==new Date().getFullYear()?"/"+String(y).slice(2):"")};
 const fmtTime=t=>{if(!t)return"";let [h,m]=t.split(":").map(Number);const s=h<12?"ص":"م";h=h%12||12;return `${h}:${String(m).padStart(2,"0")} ${s}`};
 const hhmm=d=>`${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 function ago(ms){if(!ms)return"";const m=Math.round((Date.now()-ms)/60000);if(m<1)return"دلوقتي";if(m<60)return`من ${m} د`;const h=Math.round(m/60);if(h<24)return`من ${h} س`;const d=Math.round(h/24);return d<30?`من ${d} يوم`:new Date(ms).toLocaleDateString("ar-EG")}
@@ -419,7 +423,7 @@ function toDb(o){const r={};for(const [k,c] of Object.entries(COLS)){if(!(k in o
 /* ================= state ================= */
 let SB=null,session=null,profile=null,TEAM=[],teamById={},rows=[],editingId=null,delArmed=false,autoLabel="",dupOk=false,curLog=[];
 let RULES=JSON.parse(JSON.stringify(DEFAULT_RULES)),TEMPLATES={...DEFAULT_TPL};
-const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",campaign:"",tab:"all",mine:false};
+const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",campaign:"",year:"",tab:"all",mine:false,sort:(()=>{try{return localStorage.getItem("crm_sort")||"lastDesc"}catch(e){return"lastDesc"}})()};
 const isAdmin=()=>profile&&profile.role==="admin";
 const myName=()=>(profile&&profile.name)||"";
 
@@ -451,7 +455,7 @@ function minsTo(r){if(!r.followUp||!r.followTime||r.status==="غير مهتم")r
 
 /* ================= render ================= */
 function baseFiltered(){const q=view.q.trim().toLowerCase(),me=myName();
-  return rows.filter(r=>(!view.mine||(me&&r.owner===me))&&(!view.brand||r.brand===view.brand)&&(!view.channel||r.channel===view.channel)&&(!view.type||r.type===view.type)&&
+  return rows.filter(r=>(!view.year||(r.lastMsg||"").startsWith(view.year))&&(!view.mine||(me&&r.owner===me))&&(!view.brand||r.brand===view.brand)&&(!view.channel||r.channel===view.channel)&&(!view.type||r.type===view.type)&&
     (!view.owner||r.owner===view.owner)&&(!view.reason||r.reason===view.reason)&&(!view.campaign||r.campaign===view.campaign)&&
     (!q||[r.name,r.phone,r.exam,r.summary,r.notes,r.owner,r.country,r.campaign,r.nextCert].some(v=>String(v||"").toLowerCase().includes(q))))}
 function render(){
@@ -473,15 +477,20 @@ function render(){
   if(view.tab==="pay")list=list.filter(payDue);
   if(view.tab==="exam")list=list.filter(examSoon).sort((a,b)=>(a.examDate+a.examTime).localeCompare(b.examDate+b.examTime));
   const rank=r=>({today:0,late:1}[fuState(r)]??2),tm=r=>r.followTime||"99";
-  if(view.tab!=="exam")list.sort((a,b)=>rank(a)-rank(b)||(rank(a)<2?tm(a).localeCompare(tm(b)):0)||(b.createdAt||0)-(a.createdAt||0));
+  const byLast=(a,b)=>(b.lastMsg||"").localeCompare(a.lastMsg||"")||(b.createdAt||0)-(a.createdAt||0);
+  const byFollow=(a,b)=>rank(a)-rank(b)||(a.followUp||"9999").localeCompare(b.followUp||"9999")||tm(a).localeCompare(tm(b))||byLast(a,b);
+  /* تبويبات المتابعة دايماً بالساعة؛ غير كده حسب اختيار الترتيب */
+  const srt=["today","late","soon"].includes(view.tab)?"follow":view.sort;
+  if(view.tab!=="exam")list.sort(srt==="follow"?byFollow:srt==="lastAsc"?(a,b)=>-byLast(a,b):srt==="added"?(a,b)=>(b.createdAt||0)-(a.createdAt||0):byLast);
   const badges=r=>{const b=[],rem=remaining(r);
     if(rem>0)b.push(`<span class="bdg money ${payDue(r)?"late":""}" title="${r.dueDate?"ميعاد الدفع "+fmtDate(r.dueDate):""}">💰 ${esc(fmtMoney(rem,r.currency))}${r.dueDate?" · "+fmtDate(r.dueDate):""}</span>`);
     if(r.examDate)b.push(`<span class="bdg exam">📝 ${fmtDate(r.examDate)}${r.examTime?" "+fmtTime(r.examTime):""}</span>`);
     if(r.result==="نجح")b.push(`<span class="bdg pass">✓ نجح</span>`);if(r.result==="رسب")b.push(`<span class="bdg fail">✗ رسب</span>`);
     return b.length?`<div class="badges">${b.join("")}</div>`:""};
-  const shown=list.slice(0,500);
-  $("tbody").innerHTML=shown.map(r=>{const k=ST[r.status]||"new",fs=fuState(r),okLink=r.link&&/^https?:\/\//i.test(r.link);
+  const shown=list.slice(0,5000);
+  $("tbody").innerHTML=shown.map((r,i)=>{const k=ST[r.status]||"new",fs=fuState(r),okLink=r.link&&/^https?:\/\//i.test(r.link);
     return `<tr class="row" data-id="${esc(r.id)}" style="--dot:var(--c-${k});background:var(--t-${k})">
+      <td class="num">${i+1}</td>
       <td><div class="name">${r.priority&&r.priority!=="غير محدد"?`<i class="pdot p-${esc(r.priority)}" title="أولوية ${esc(r.priority)}"></i>`:""}${esc(r.name)}</div><div class="sub mono">${esc(r.phone)}</div>${badges(r)}</td>
       <td class="hide-sm"><span class="tag">${esc(r.brand)}</span> <span class="sub">${esc(r.channel)}</span></td>
       <td><div>${esc(r.type)}</div><div class="sub" dir="auto">${esc(r.exam)}</div></td>
@@ -498,8 +507,10 @@ function render(){
   const e=$("empty");
   if(!rows.length){e.hidden=false;e.innerHTML=`<h2>لسه مفيش عملاء</h2>أضف أول عميل من «+ عميل جديد»، أو استورد شيت من «استيراد CSV».`}
   else if(!list.length){e.hidden=false;e.innerHTML=`<h2>مفيش نتايج</h2>غيّر الفلتر أو البحث.`}else e.hidden=true;
-  $("countNote").textContent=rows.length?`معروض ${shown.length} من ${list.length}${list.length>shown.length?" (استخدم البحث أو الفلاتر للباقي)":""} · إجمالي ${rows.length} عميل · الترتيب: متابعات النهارده بالساعة، ثم المتأخرة، ثم الأحدث.`:"";
+  $("countNote").textContent=rows.length?`معروض ${list.length} عميل من إجمالي ${rows.length}${view.year?" · سنة "+view.year:""}`:"";
   const owners=[...new Set([...TEAM.map(t=>t.name),...rows.map(r=>r.owner)].filter(Boolean))].sort(),cur=view.owner;fillSelect($("fOwner"),owners,"كل المسؤولين");$("fOwner").value=cur;
+  const yrs={};rows.forEach(r=>{const y=(r.lastMsg||"").slice(0,4);if(y)yrs[y]=(yrs[y]||0)+1});
+  fillSelect($("fYear"),Object.keys(yrs).sort().reverse().map(y=>[y,`سنة ${y} (${yrs[y]})`]),"كل السنين");$("fYear").value=view.year;
   const camps=[...new Set(rows.map(r=>r.campaign).filter(Boolean))].sort();fillSelect($("fCampaign"),camps,"كل الحملات");$("fCampaign").value=view.campaign;
   $("campaignsList").innerHTML=camps.map(c=>`<option value="${esc(c)}">`).join("");
   const me=myName();$("mineBtn").hidden=!me;$("mineBtn").classList.toggle("on",view.mine);$("mineBtn").textContent=`👤 عملائي (${rows.filter(r=>me&&r.owner===me).length})`;
@@ -509,8 +520,9 @@ function render(){
 $("kpis").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;view.tab=view.tab===b.dataset.tab?"all":b.dataset.tab;render()});
 $("statusChips").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;view.status=b.dataset.st;render()});
 $("q").addEventListener("input",e=>{view.q=e.target.value;render()});
+$("fSort").value=view.sort;$("fSort").addEventListener("change",e=>{view.sort=e.target.value;try{localStorage.setItem("crm_sort",view.sort)}catch(_){}render()});
 $("mineBtn").onclick=()=>{view.mine=!view.mine;render()};
-[["fBrand","brand"],["fChannel","channel"],["fType","type"],["fOwner","owner"],["fReason","reason"],["fCampaign","campaign"]].forEach(([id,k])=>$(id).addEventListener("change",e=>{view[k]=e.target.value;render()}));
+[["fBrand","brand"],["fChannel","channel"],["fType","type"],["fOwner","owner"],["fReason","reason"],["fCampaign","campaign"],["fYear","year"]].forEach(([id,k])=>$(id).addEventListener("change",e=>{view[k]=e.target.value;render()}));
 $("tbody").addEventListener("change",async e=>{const s=e.target.closest(".stsel");if(!s)return;
   try{await updateLead(s.dataset.id,{status:s.value});await addLog(s.dataset.id,"status",`الحالة: ${s.value}`);toast("اتغيرت الحالة")}catch(err){toast(errMsg(err));render()}});
 $("tbody").addEventListener("click",e=>{if(e.target.closest(".stsel,a"))return;const tr=e.target.closest("tr.row");if(tr)openDlg(tr.dataset.id)});
