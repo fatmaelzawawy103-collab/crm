@@ -160,7 +160,10 @@ textarea{min-height:70px;resize:vertical}
 .tk-msg summary{cursor:pointer;font-size:12.5px;color:var(--muted);font-weight:700}
 .tk-bubble{margin-top:6px;background:var(--t-int);color:var(--ink);border-radius:12px 12px 2px 12px;padding:8px 10px;font-size:12.5px;white-space:pre-wrap;line-height:1.6}
 .tk-acts{display:flex;gap:6px;padding:0 16px 14px}
-.tk-acts .primary{flex:1}
+.tk-acts .primary{flex:1;white-space:nowrap}
+.tk-acts .primary.alt{background:#163159;border-color:#163159;color:#fff}
+.tk-bubble{position:relative;padding-inline-start:30px!important;unicode-bidi:isolate;text-align:right}
+.tk-n{position:absolute;inset-inline-start:8px;top:8px;width:16px;height:16px;border-radius:50%;background:#163159;color:#fff;font-size:10px;line-height:16px;text-align:center;font-weight:800}
 .tk-acts button{padding:6px 10px;font-size:13px}
 .ticket.off .tk-top{background:linear-gradient(120deg,#5d6a80,#8a94a6)}
 .ticket.off{opacity:.8}
@@ -403,7 +406,7 @@ textarea{min-height:70px;resize:vertical}
     <label>السعر بالدولار<input id="o_price" type="number" min="0" step="any" inputmode="decimal"></label>
     <label>ساري لحد<input id="o_until" type="date"></label>
     <label class="full">المتضمَّن في العرض<input id="o_includes" placeholder="مثال: فاوتشر رسمي + حجز الميعاد + المتابعة لحد يوم الامتحان"></label>
-    <label class="full">الرسالة الجاهزة<textarea id="o_msg" rows="4"></textarea>
+    <label class="full">الرسالة ① (النص اللي بتكتبيه) <span class="sub">— تفاصيل العرض بتتنسخ لوحدها في رسالة ② منفصلة</span><textarea id="o_msg" rows="4"></textarea>
       <span class="sub">بتتبدّل لوحدها: {name} اسم العميل، {exam} الاختبار، {price} السعر، {includes} المتضمَّن، {until} آخر ميعاد.</span></label>
     <label><span><input type="checkbox" id="o_active" checked style="width:auto"> العرض شغال</span></label>
     <span class="quick" style="grid-column:1/-1"><button type="button" class="primary" id="o_save">حفظ العرض</button><button type="button" id="o_cancel">إلغاء</button><span class="grow"></span><button type="button" class="danger" id="o_del" hidden>حذف العرض</button></span>
@@ -504,11 +507,16 @@ function toDb(o){const r={};for(const [k,c] of Object.entries(COLS)){if(!(k in o
 let SB=null,session=null,profile=null,TEAM=[],teamById={},rows=[],editingId=null,delArmed=false,autoLabel="",dupOk=false,curLog=[];
 let RULES=JSON.parse(JSON.stringify(DEFAULT_RULES)),TEMPLATES={...DEFAULT_TPL};
 let OFFERS=[],editingOffer=null,offDelArmed=false;
-const DEFAULT_OFFER_MSG="باشمهندس {name}، عندنا عرض على {exam}: {price} دولار ({includes}). العرض ساري لحد {until}. تحب نحجزلك؟";
+const DEFAULT_OFFER_MSG="باشمهندس {name}، عندنا عرض حاليًا على {exam} 👇 تفاصيله في الرسالة الجاية، ولو مناسبك أحجزلك على طول.";
 const examKey=s=>String(s||"").toUpperCase().replace(/[\s\-_.]/g,"");
 const offerLive=o=>o.active&&(!o.valid_until||o.valid_until>=today());
 function offerFor(r){const k=examKey(r&&r.exam);if(!k)return null;
   return OFFERS.filter(offerLive).find(o=>{const ok=examKey(o.exam);return ok&&(k.includes(ok)||ok.includes(k))})||null}
+function offerDetails(o){const L=[`🏷️ ${o.title?o.title:"عرض"} – ${o.exam||""}`];
+  if(o.price!=null&&o.price!=="")L.push(`💵 السعر: ${(+o.price).toLocaleString("en-US")} دولار`);
+  const inc=String(o.includes||"").split(/\s*[+،,\n]\s*/).filter(Boolean);if(inc.length)L.push("✅ العرض بيشمل:",...inc.map(x=>"• "+x));
+  L.push(`⏳ ${o.valid_until?"ساري لحد "+fmtDate(o.valid_until):"ساري لحد إشعار آخر"}`);return L.join("\n")}
+const offMsg=o=>offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،");
 function offerText(o,r){const first=((r&&r.name)||"").trim().split(/\s+/)[0]||"";
   return (o.message||DEFAULT_OFFER_MSG).replaceAll("{name}",first).replaceAll("{exam}",o.exam||"").replaceAll("{price}",o.price!=null&&o.price!==""?(+o.price).toLocaleString("en-US"):"")
     .replaceAll("{includes}",o.includes||"").replaceAll("{until}",o.valid_until?fmtDate(o.valid_until):"إشعار آخر")}
@@ -774,9 +782,9 @@ function renderOffers(){const q=examKey($("offQ").value),adm=isAdmin();$("offAdd
         ${inc.length?`<ul class="tk-inc">${inc.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
         <div class="tk-time">⏱ ${time}</div>
         <div class="tk-who"><span>👥 <b>${n}</b> عميل ممكن يناسبهم</span>${n?`<button type="button" data-o="who" data-id="${esc(o.id)}">وريني</button>`:""}</div>
-        <details class="tk-msg"><summary>💬 شكل الرسالة</summary><div class="tk-bubble">${esc(offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،"))}</div></details>
+        <details class="tk-msg"><summary>💬 شكل الرسالتين</summary><div class="tk-bubble" dir="rtl"><span class="tk-n">1</span>${esc(offMsg(o))}</div><div class="tk-bubble" dir="rtl"><span class="tk-n">2</span>${esc(offerDetails(o))}</div></details>
       </div>
-      <div class="tk-acts"><button type="button" class="primary" data-o="copy" data-id="${esc(o.id)}">📋 نسخ رسالة العرض</button>${adm?`<button type="button" data-o="edit" data-id="${esc(o.id)}">✏️ تعديل</button>`:""}</div>
+      <div class="tk-acts"><button type="button" class="primary" data-o="copy" data-id="${esc(o.id)}">① نسخ الرسالة</button><button type="button" class="primary alt" data-o="copyd" data-id="${esc(o.id)}">② نسخ العرض</button>${adm?`<button type="button" data-o="edit" data-id="${esc(o.id)}" aria-label="تعديل">✏️</button>`:""}</div>
       ${st==="done"?`<span class="tk-stamp">${o.active?"منتهي":"متوقف"}</span>`:""}
     </article>`}).join("")
     :`<div class="empty"><h2>${OFFERS.length?"مفيش عروض هنا":"لسه مفيش عروض"}</h2>${OFFERS.length?"جربي فلتر تاني.":adm?"دوسي «+ عرض جديد» وضيفي أول عرض.":"الأدمن هو اللي بيضيف العروض."}</div>`;
@@ -801,7 +809,8 @@ $("o_del").onclick=async()=>{if(!offDelArmed){offDelArmed=true;$("o_del").textCo
   try{const {error}=await SB.from("offers").delete().eq("id",editingOffer.id);if(error)throw error;await loadOffers();$("offForm").hidden=true;renderOffers();toast("اتحذف العرض")}catch(e){toast(errMsg(e))}};
 $("offList").addEventListener("click",async e=>{const b=e.target.closest("[data-o]");if(!b)return;const o=OFFERS.find(x=>x.id===b.dataset.id);if(!o)return;
   if(b.dataset.o==="edit")openOfferForm(o);
-  if(b.dataset.o==="copy"){if(!(await copyText(offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،"),"اتنسخت رسالة العرض")))toast("مقدرتش أنسخ")}
+  if(b.dataset.o==="copy"){if(!(await copyText(offMsg(o),"اتنسخت الرسالة ①")))toast("مقدرتش أنسخ")}
+  if(b.dataset.o==="copyd"){if(!(await copyText(offerDetails(o),"اتنسخ العرض ②")))toast("مقدرتش أنسخ")}
   if(b.dataset.o==="who"){$("offersDlg").close();view.q=o.exam;$("q").value=o.exam;view.tab="all";view.status="";render();
     banner(`العملاء اللي سألوا عن ${o.exam}: افتحي أي عميل وهتلاقي رسالة العرض جاهزة. امسحي البحث فوق عشان ترجعي لكل العملاء.`);$("q").scrollIntoView({block:"center"})}});
 
@@ -814,14 +823,15 @@ function renderPrice(){const q=examKey($("priceQ").value),box=$("priceRes");if(!
       <span class="p">${o.price!=null&&o.price!==""?(+o.price).toLocaleString("en-US")+" $":"من غير سعر"}</span></b>
       ${o.includes?`<span class="sub">${esc(o.includes)}</span>`:""}
       <span class="sub">${offerLive(o)?(o.valid_until?"ساري لحد "+fmtDate(o.valid_until):"ساري"):"⚠️ "+(o.active?"انتهى "+fmtDate(o.valid_until):"متوقف")}</span>
-      <span class="acts"><button type="button" data-pc="${esc(o.id)}">نسخ رسالة العرض</button><button type="button" data-pw="${esc(o.id)}">مين سأل عنه؟</button></span></div>`).join("")
+      <span class="acts"><button type="button" data-pc="${esc(o.id)}">① نسخ الرسالة</button><button type="button" data-pd="${esc(o.id)}">② نسخ العرض</button><button type="button" data-pw="${esc(o.id)}">مين سأل عنه؟</button></span></div>`).join("")
     :`<div class="pr"><b>مفيش سعر متسجل لـ «${esc($("priceQ").value.trim())}»</b><span class="sub">${isAdmin()?"ضيفيه من «العروض» ← «+ عرض جديد»، ومن غير تاريخ انتهاء لو ده سعره الثابت.":"اطلبي من الأدمن يضيفه في «العروض»."}</span></div>`}
 $("priceQ").addEventListener("input",renderPrice);
 $("priceQ").addEventListener("focus",renderPrice);
 $("priceQ").addEventListener("keydown",e=>{if(e.key==="Escape"){$("priceQ").value="";renderPrice()}});
 document.addEventListener("click",e=>{if(!e.target.closest(".pricebox"))$("priceRes").hidden=true});
-$("priceRes").addEventListener("click",async e=>{const c=e.target.closest("[data-pc]"),w=e.target.closest("[data-pw]");
-  if(c){const o=OFFERS.find(x=>x.id===c.dataset.pc);if(o&&!(await copyText(offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،"),"اتنسخت رسالة العرض")))toast("مقدرتش أنسخ")}
+$("priceRes").addEventListener("click",async e=>{const c=e.target.closest("[data-pc]"),w=e.target.closest("[data-pw]"),dd=e.target.closest("[data-pd]");
+  if(dd){const o=OFFERS.find(x=>x.id===dd.dataset.pd);if(o&&!(await copyText(offerDetails(o),"اتنسخ العرض ②")))toast("مقدرتش أنسخ")}
+  if(c){const o=OFFERS.find(x=>x.id===c.dataset.pc);if(o&&!(await copyText(offMsg(o),"اتنسخت الرسالة ①")))toast("مقدرتش أنسخ")}
   if(w){const o=OFFERS.find(x=>x.id===w.dataset.pw);if(o){$("priceRes").hidden=true;view.q=o.exam;$("q").value=o.exam;view.tab="all";view.status="";render();$("q").scrollIntoView({block:"center"})}}});
 
 /* ================= reports ================= */
