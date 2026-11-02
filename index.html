@@ -6,7 +6,7 @@
 <title>CRM العملاء</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1f5eff">
+<meta name="theme-color" content="#163159">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -49,6 +49,9 @@ button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible
 .primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 .okbtn{background:var(--ok);color:#fff;border-color:var(--ok)}
 .danger{color:var(--warn)}
+.login-logo{width:220px;max-width:100%;margin:0 auto 4px;display:block}
+.hdr-logo{height:34px;width:auto}
+@media (prefers-color-scheme:dark){.login-logo,.hdr-logo{background:#fff;border-radius:8px;padding:4px 8px}}
 .who{font-weight:700;color:var(--muted);font-size:13px}
 .warnbtn{background:var(--t-price);border-color:var(--c-price);color:var(--ink)}
 main .wrap{padding-block:16px 40px;display:grid;gap:14px}
@@ -180,6 +183,7 @@ textarea{min-height:70px;resize:vertical}
 <!-- ===== login ===== -->
 <section class="login" id="loginView" hidden>
   <form id="loginForm">
+    <img src="logo.png" alt="3ARAB EL IT" class="login-logo">
     <h2>CRM العملاء</h2>
     <p class="note" style="margin:0">ادخل بالإيميل والباسورد اللي اتعملولك.</p>
     <label>الإيميل<input id="lg_email" type="email" dir="ltr" autocomplete="username" required></label>
@@ -192,6 +196,7 @@ textarea{min-height:70px;resize:vertical}
 <!-- ===== app ===== -->
 <div id="appView" hidden>
 <header><div class="wrap">
+  <img src="logo.png" alt="3ARAB EL IT" class="hdr-logo">
   <h1>CRM العملاء <small id="syncNote">جاري التحميل…</small></h1>
   <span class="grow"></span>
   <span class="who" id="whoAmI"></span>
