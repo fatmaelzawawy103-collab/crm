@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>CRM العملاء</title>
+<meta name="robots" content="noindex,nofollow">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <style>
@@ -272,6 +273,7 @@ textarea{min-height:70px;resize:vertical}
   <div class="rules"><h3>حسابي</h3>
     <label>اسمي في البرنامج<input id="myNameIn"></label>
     <label>باسورد جديد (اختياري)<input id="myPassIn" type="password" dir="ltr" autocomplete="new-password" minlength="8"></label>
+    <label>رقم تليجرام (Id) للتنبيهات<input id="myTgIn" dir="ltr" inputmode="numeric" placeholder="من @userinfobot"></label>
     <span class="quick"><button type="button" id="saveMe" class="primary">حفظ حسابي</button><button type="button" id="logoutBtn">تسجيل خروج</button></span>
   </div>
   <div class="rules"><h3>الفريق</h3>
@@ -450,7 +452,7 @@ async function loadAll(){
     if(error)throw error;all.push(...data);if(data.length<1000)break}
   rows=all.map(fromDb);
 }
-async function loadTeam(){const {data,error}=await SB.from("profiles").select("id,name,role").order("name");if(error)throw error;
+async function loadTeam(){const {data,error}=await SB.from("profiles").select("id,name,role,telegram_chat_id").order("name");if(error)throw error;
   TEAM=data;teamById=Object.fromEntries(data.map(t=>[t.id,t]));profile=teamById[session.user.id]||null}
 async function loadConfig(){const {data}=await SB.from("config").select("key,value");
   (data||[]).forEach(c=>{if(c.key==="rules"){const d=c.value||{};RULES={reasons:{...DEFAULT_RULES.reasons,...(d.reasons||{})},noReason:d.noReason??DEFAULT_RULES.noReason,courseDays:d.courseDays??DEFAULT_RULES.courseDays}}
@@ -578,7 +580,7 @@ $("repPeriod").addEventListener("change",renderReports);
 
 /* ================= settings ================= */
 function renderSettings(){const adm=isAdmin();
-  $("myNameIn").value=myName();$("myPassIn").value="";
+  $("myNameIn").value=myName();$("myPassIn").value="";$("myTgIn").value=(profile&&profile.telegram_chat_id)||"";
   const ROLES=[["agent","موظف"],["admin","أدمن"],["pending","مستني تفعيل (مقفول)"]];
   $("teamBox").innerHTML=TEAM.map(t=>`<div><input data-tid="${esc(t.id)}" value="${esc(t.name)}" ${adm||t.id===session.user.id?"":"disabled"} aria-label="اسم الموظف">
     ${adm&&t.id!==session.user.id?`<select data-rid="${esc(t.id)}" aria-label="الصلاحية">${ROLES.map(([v,l])=>`<option value="${v}" ${t.role===v?"selected":""}>${l}</option>`).join("")}</select>`
@@ -592,8 +594,10 @@ function renderSettings(){const adm=isAdmin();
     `<label>مفيش سبب محدد<input type="number" min="0" id="rule_none" value="${RULES.noReason}" ${adm?"":"disabled"}></label><label>مدة الكورس الافتراضية (أيام)<input type="number" min="1" id="rule_course" value="${RULES.courseDays}" ${adm?"":"disabled"}></label>`;
   $("adminFoot").hidden=!adm;$("adminNote").hidden=adm}
 $("rulesBtn").onclick=()=>{renderSettings();$("rulesDlg").showModal()};$("closeRules").onclick=()=>$("rulesDlg").close();
-$("saveMe").onclick=async()=>{const name=$("myNameIn").value.trim(),pass=$("myPassIn").value;
-  try{if(name&&name!==myName()){const {error}=await SB.from("profiles").update({name}).eq("id",session.user.id);if(error)throw error}
+$("saveMe").onclick=async()=>{const name=$("myNameIn").value.trim(),pass=$("myPassIn").value,tg=$("myTgIn").value.replace(/\s/g,"");
+  if(tg&&!/^-?\d{5,15}$/.test(tg)){toast("رقم تليجرام لازم يكون أرقام بس");return}
+  try{const patch={};if(name&&name!==myName())patch.name=name;if(tg!==((profile&&profile.telegram_chat_id)||""))patch.telegram_chat_id=tg||null;
+    if(Object.keys(patch).length){const {error}=await SB.from("profiles").update(patch).eq("id",session.user.id);if(error)throw error}
     if(pass){if(pass.length<8){toast("الباسورد لازم 8 حروف على الأقل");return}const {error}=await SB.auth.updateUser({password:pass});if(error)throw error}
     await loadTeam();showWho();render();renderSettings();toast("اتحفظ حسابك")}catch(e){toast(errMsg(e))}};
 async function saveTeam(){try{for(const inp of document.querySelectorAll("[data-tid]")){const t=teamById[inp.dataset.tid],v=inp.value.trim();
