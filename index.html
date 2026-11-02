@@ -285,6 +285,7 @@ textarea{min-height:70px;resize:vertical}
 
     <div class="sec">رسالة متابعة جاهزة</div>
     <div class="tpl">
+      <label>رسالة العميل الخاصة (بتتحفظ مع العميل)<textarea id="f_followMsg" rows="3" placeholder="رسالة مكتوبة على حسب محادثة العميل ده"></textarea></label>
       <label>نوع الرسالة<select id="tplSel"></select></label>
       <textarea id="tplText" rows="4" aria-label="نص الرسالة"></textarea>
       <span class="quick"><button type="button" id="tplCopy" class="primary">نسخ الرسالة</button><span class="sub">اتختارت تلقائي حسب السبب والمرحلة، وتقدر تعدّل فيها قبل النسخ.</span></span>
@@ -356,7 +357,7 @@ const REASONS=["سأل وسكت","بيقارن بمنافس","السعر غال�
 const COUNTRIES=["مصر","السعودية","الإمارات","الكويت","قطر","البحرين","عُمان","الأردن","العراق","لبنان","سوريا","فلسطين","اليمن","ليبيا","تونس","الجزائر","المغرب","السودان","موريتانيا","الصومال","جيبوتي","أمريكا","كندا","بريطانيا","ألمانيا","فرنسا","هولندا","إيطاليا","إسبانيا","السويد","تركيا","الهند","باكستان","ماليزيا","أستراليا"];
 const DEFAULT_RULES={reasons:{"سأل وسكت":1,"بيقارن بمنافس":2,"السعر غالي":3,"مش جاهز للامتحان لسه":7},noReason:3,courseDays:30};
 const CURRENCIES=["USD","EGP","SAR","AED","KWD","QAR","OMR","BHD","JOD","EUR"];
-const TPL_KEYS=[["سأل وسكت","سأل وسكت"],["بيقارن بمنافس","بيقارن بمنافس"],["السعر غالي","السعر غالي"],["مش جاهز للامتحان لسه","مش جاهز للامتحان لسه"],["course1","كورس: نص المدة"],["course2","كورس: آخر المدة"],["ready","جاهز للحجز"],["payment","دفعة مستحقة"],["retake","رسب: إعادة الامتحان"],["upsell","بعد النجاح: الشهادة الجاية"],["general","متابعة عامة"]];
+const TPL_KEYS=[["custom","رسالة العميل الخاصة"],["سأل وسكت","سأل وسكت"],["بيقارن بمنافس","بيقارن بمنافس"],["السعر غالي","السعر غالي"],["مش جاهز للامتحان لسه","مش جاهز للامتحان لسه"],["course1","كورس: نص المدة"],["course2","كورس: آخر المدة"],["ready","جاهز للحجز"],["payment","دفعة مستحقة"],["retake","رسب: إعادة الامتحان"],["upsell","بعد النجاح: الشهادة الجاية"],["general","متابعة عامة"]];
 const DEFAULT_TPL={
   "سأل وسكت":"أهلاً باشمهندس {name} 👋\nكنت سألت معانا عن {exam}، لسه مهتم؟\nلو عندك أي سؤال عن الحجز أو المواعيد أنا موجود.",
   "بيقارن بمنافس":"باشمهندس {name}، حابب أوضح إن الحجز عندنا بيتم رسمي باسمك من موقع الجهة المانحة، وبنمشي معاك في الإجراءات خطوة بخطوة لحد يوم الامتحان.\nتحب أبعتلك المواعيد المتاحة لـ {exam}؟",
@@ -372,7 +373,7 @@ const DEFAULT_TPL={
 
 /* column mapping: app field -> db column */
 const COLS={name:"name",phone:"phone",country:"country",brand:"brand",channel:"channel",owner:"owner",type:"type",exam:"exam",status:"status",priority:"priority",reply:"reply",reason:"reason",firstMsg:"first_msg",lastMsg:"last_msg",link:"link",summary:"summary",courseStart:"course_start",courseDays:"course_days",followUp:"follow_up",followTime:"follow_time",followLabel:"follow_label",followCount:"follow_count",lastContact:"last_contact",notes:"notes",
-  campaign:"campaign",price:"price",paid:"paid",currency:"currency",dueDate:"due_date",examDate:"exam_date",examTime:"exam_time",result:"result",nextCert:"next_cert"};
+  campaign:"campaign",price:"price",paid:"paid",currency:"currency",dueDate:"due_date",examDate:"exam_date",examTime:"exam_time",result:"result",nextCert:"next_cert",followMsg:"follow_msg"};
 const DATE_F=new Set(["firstMsg","lastMsg","courseStart","followUp","lastContact","dueDate","examDate"]);
 const TIME_F=new Set(["followTime","examTime"]);
 const NUM_F=new Set(["price","paid"]);
@@ -540,7 +541,7 @@ function subscribe(){
 
 /* ================= form ================= */
 const F={name:"f_name",phone:"f_phone",country:"f_country",brand:"f_brand",channel:"f_channel",owner:"f_owner",type:"f_type",exam:"f_exam",status:"f_status",priority:"f_priority",reply:"f_reply",reason:"f_reason",firstMsg:"f_first",lastMsg:"f_last",link:"f_link",summary:"f_summary",courseStart:"f_cstart",courseDays:"f_cdays",followUp:"f_follow",followTime:"f_ftime",notes:"f_notes",
-  campaign:"f_campaign",price:"f_price",paid:"f_paid",currency:"f_currency",dueDate:"f_due",examDate:"f_examDate",examTime:"f_examTime",result:"f_result",nextCert:"f_nextCert"};
+  campaign:"f_campaign",price:"f_price",paid:"f_paid",currency:"f_currency",dueDate:"f_due",examDate:"f_examDate",examTime:"f_examTime",result:"f_result",nextCert:"f_nextCert",followMsg:"f_followMsg"};
 function updRemain(){const d=formData(),rem=remaining(d),o=$("remainOut");
   o.textContent=num(d.price)?(rem>0?fmtMoney(rem,d.currency):"مدفوع بالكامل ✓"):"—";o.classList.toggle("due",payDue(d))}
 ["f_price","f_paid","f_currency","f_due"].forEach(id=>$(id).addEventListener("input",updRemain));
@@ -624,15 +625,17 @@ $("dupBox").addEventListener("click",e=>{const a=e.target.dataset.dup;if(!a)retu
 
 /* ================= templates ================= */
 function tplKeyFor(r){const l=(r&&r.followLabel)||"";
+  if(r&&r.followMsg)return"custom";
   if(r&&payDue(r))return"payment";
   if(l.startsWith("بعد النجاح")||(r&&r.result==="نجح"))return"upsell";if(l.startsWith("رسب")||(r&&r.result==="رسب"))return"retake";
   if(l.startsWith("كورس: نص"))return"course1";if(l.startsWith("كورس: آخر"))return"course2";
   if(r&&REASONS.includes(r.reason))return r.reason;if(r&&r.status==="جاهز للحجز")return"ready";return"general"}
-function tplText(key,r){const first=(r.name||"").trim().split(/\s+/)[0]||"";return (TEMPLATES[key]||DEFAULT_TPL[key]||DEFAULT_TPL.general)
+function tplText(key,r){if(key==="custom")return r.followMsg||"";const first=(r.name||"").trim().split(/\s+/)[0]||"";return (TEMPLATES[key]||DEFAULT_TPL[key]||DEFAULT_TPL.general)
   .replaceAll("{name}",first).replaceAll("{exam}",r.exam||"الاختبار").replaceAll("{next}",r.nextCert||"الشهادة اللي بعدها")
   .replaceAll("{remaining}",remaining(r)?fmtMoney(remaining(r),r.currency):"المبلغ").replaceAll("{due}",r.dueDate?fmtDate(r.dueDate):"قريب")}
 function pickTemplate(r){$("tplSel").innerHTML=TPL_KEYS.map(([k,l])=>`<option value="${esc(k)}">${esc(l)}</option>`).join("");
   const k=tplKeyFor(r);$("tplSel").value=k;$("tplText").value=tplText(k,formData())}
+$("f_followMsg").addEventListener("input",()=>{if($("tplSel").value==="custom")$("tplText").value=$("f_followMsg").value});
 $("tplSel").addEventListener("change",()=>{$("tplText").value=tplText($("tplSel").value,formData())});
 ["f_reason","f_status","f_due","f_paid"].forEach(id=>$(id).addEventListener("change",()=>{const k=tplKeyFor({...formData(),followLabel:autoLabel});$("tplSel").value=k;$("tplText").value=tplText(k,formData())}));
 async function copyText(t,okMsg){try{await navigator.clipboard.writeText(t);toast(okMsg);return true}catch(e){return false}}
@@ -677,7 +680,7 @@ function renderSettings(){const adm=isAdmin();
     (adm?`<span class="quick"><button type="button" id="saveTeam">حفظ أسماء الفريق</button></span>`:"");
   if(adm)$("saveTeam").onclick=saveTeam;
   $("tplBox").innerHTML=`<h3>الرسايل الجاهزة</h3><p class="sub" style="grid-column:1/-1;margin:0">اكتب {name} مكان اسم العميل، و{exam} مكان الاختبار، و{next} مكان الشهادة الجاية، و{remaining} مكان المبلغ المتبقي، و{due} مكان ميعاد الدفع.</p>`+
-    TPL_KEYS.map(([k,l],i)=>`<label class="full">${esc(l)}<textarea id="tpl_${i}" rows="3" ${adm?"":"disabled"}>${esc(TEMPLATES[k]||"")}</textarea></label>`).join("");
+    TPL_KEYS.map(([k,l],i)=>k==="custom"?"":`<label class="full">${esc(l)}<textarea id="tpl_${i}" rows="3" ${adm?"":"disabled"}>${esc(TEMPLATES[k]||"")}</textarea></label>`).join("");
   $("rulesBox").innerHTML=`<h3>قواعد المتابعة (أيام بعد آخر رسالة)</h3>`+
     REASONS.map((r,i)=>`<label>${esc(r)}<input type="number" min="0" id="rule_${i}" value="${RULES.reasons[r]??""}" ${adm?"":"disabled"}></label>`).join("")+
     `<label>مفيش سبب محدد<input type="number" min="0" id="rule_none" value="${RULES.noReason}" ${adm?"":"disabled"}></label><label>مدة الكورس الافتراضية (أيام)<input type="number" min="1" id="rule_course" value="${RULES.courseDays}" ${adm?"":"disabled"}></label>`;
@@ -696,7 +699,7 @@ async function saveTeam(){try{for(const inp of document.querySelectorAll("[data-
 $("logoutBtn").onclick=async()=>{await SB.auth.signOut();location.reload()};
 $("resetRules").onclick=()=>{RULES=JSON.parse(JSON.stringify(DEFAULT_RULES));TEMPLATES={...DEFAULT_TPL};renderSettings()};
 function readRulesForm(){const r={reasons:{},noReason:+$("rule_none").value||3,courseDays:+$("rule_course").value||30};REASONS.forEach((x,i)=>{const v=$("rule_"+i).value;r.reasons[x]=v===""?r.noReason:+v});return r}
-$("saveRules").onclick=async()=>{RULES=readRulesForm();const items={};TPL_KEYS.forEach(([k],i)=>{items[k]=$("tpl_"+i).value.trim()||DEFAULT_TPL[k]});TEMPLATES=items;
+$("saveRules").onclick=async()=>{RULES=readRulesForm();const items={};TPL_KEYS.forEach(([k],i)=>{if(k==="custom")return;items[k]=$("tpl_"+i).value.trim()||DEFAULT_TPL[k]});TEMPLATES=items;
   try{const {error}=await SB.from("config").upsert([{key:"rules",value:RULES,updated_at:new Date().toISOString()},{key:"templates",value:items,updated_at:new Date().toISOString()}]);if(error)throw error;
     $("rulesDlg").close();toast("اتحفظت القواعد والرسايل للفريق كله")}catch(e){toast(errMsg(e))}};
 $("applyRules").onclick=async()=>{RULES=readRulesForm();let n=0;
@@ -748,11 +751,11 @@ function askNotify(){try{if("Notification" in window&&Notification.permission===
 
 /* ================= CSV ================= */
 const HEAD={name:"الاسم",phone:"الموبايل",country:"الدولة",brand:"الصفحة",channel:"القناة",owner:"المسؤول",type:"نوع الطلب",exam:"اسم الاختبار",status:"حالة العميل",priority:"الأولوية",reply:"تم الرد",reason:"سبب التوقف",firstMsg:"أول رسالة",lastMsg:"تاريخ آخر رسالة",link:"رابط المحادثة",summary:"ملخص المحادثة",courseStart:"بداية الكورس",courseDays:"مدة الكورس",followUp:"موعد Follow Up",followTime:"الساعة Follow Up",notes:"ملاحظات",
-  campaign:"الحملة",price:"السعر",paid:"المدفوع",currency:"العملة",dueDate:"ميعاد الدفع",examDate:"تاريخ الامتحان",examTime:"ساعة الامتحان",result:"النتيجة",nextCert:"الشهادة الجاية"};
+  campaign:"الحملة",price:"السعر",paid:"المدفوع",currency:"العملة",dueDate:"ميعاد الدفع",examDate:"تاريخ الامتحان",examTime:"ساعة الامتحان",result:"النتيجة",nextCert:"الشهادة الجاية",followMsg:"رسالة المتابعة"};
 const ALIASES={name:["name","الاسم","اسم العميل"],phone:["phone","الموبايل","رقم","الرقم","واتساب","رقم الموبايل"],country:["country","الدولة","الدوله"],brand:["brand","page","الصفحة"],channel:["channel","القناة","القناه"],owner:["owner","المسؤول"],type:["type","نوع الطلب"],exam:["exam","الامتحان","اسم الاختبار","الكورس"],status:["status","الحالة","حالة العميل"],priority:["priority","الأولوية"],reply:["reply","الرد","تم الرد","هل تم الرد؟","هل تم الرد"],reason:["reason","سبب التوقف","السبب"],firstMsg:["first message","أول رسالة"],lastMsg:["last message","آخر رسالة","تاريخ آخر رسالة"],link:["link","رابط المحادثة","لينك المحادثة"],summary:["summary","ملخص المحادثة","الملخص"],courseStart:["course start","بداية الكورس"],courseDays:["course days","مدة الكورس"],followUp:["follow up","موعد follow up","المتابعة","ميعاد المتابعة"],followTime:["follow time","الساعه follow up","الساعة follow up","ساعة المتابعة"],notes:["notes","ملاحظات"],
   campaign:["campaign","الحملة","الحملة الإعلانية","الاعلان","الإعلان"],price:["price","السعر"],paid:["paid","المدفوع"],currency:["currency","العملة"],
   dueDate:["due date","ميعاد الدفع","ميعاد دفع المتبقي"],examDate:["exam date","تاريخ الامتحان","ميعاد الامتحان"],examTime:["exam time","ساعة الامتحان"],
-  result:["result","النتيجة"],nextCert:["next cert","الشهادة الجاية"]};
+  result:["result","النتيجة"],nextCert:["next cert","الشهادة الجاية"],followMsg:["followupmessage","رسالة المتابعة","الرسالة"]};
 function parseCSV(t){const out=[];let row=[],f="",q=false;t=t.replace(/^﻿/,"");
   for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
     else if(c==='"')q=true;else if(c===","){row.push(f);f=""}else if(c==="\n"||c==="\r"){if(c==="\r"&&t[i+1]==="\n")i++;row.push(f);out.push(row);row=[];f=""}else f+=c}
