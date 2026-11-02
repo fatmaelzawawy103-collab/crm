@@ -116,6 +116,64 @@ textarea{min-height:70px;resize:vertical}
 .quick button{padding:2px 9px;font-size:12px;font-weight:600;border-radius:6px}
 .dlg-foot{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap;position:sticky;bottom:0;background:var(--surface)}
 .meta-line{grid-column:1/-1;font-size:12px;color:var(--muted)}
+.pricebox{position:relative;flex:0 1 260px;min-width:0}
+.pricebox input{width:100%;font:inherit;padding:7px 10px;border:2px solid var(--accent);border-radius:8px;background:var(--surface);color:var(--ink)}
+.priceres{position:absolute;top:calc(100% + 6px);inset-inline-start:0;z-index:20;width:min(380px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(10,16,28,.18);padding:6px;display:grid;gap:4px;max-height:60vh;overflow-y:auto}
+.pr{border-radius:8px;padding:8px 10px;display:grid;gap:3px}
+.pr:hover{background:var(--soft)}
+.pr b{display:flex;justify-content:space-between;gap:8px}
+.pr .p{color:var(--ok);font-variant-numeric:tabular-nums}
+.pr .acts{display:flex;gap:6px}
+.pr .acts button{padding:3px 9px;font-size:12px}
+#offersDlg{width:min(1000px,calc(100vw - 24px))}
+#offersDlg .dlg-head{background:linear-gradient(120deg,#163159,#1986af);color:#fff;border-bottom:0}
+#offersDlg .dlg-head h2{color:#fff;display:flex;gap:8px;align-items:center}
+#offersDlg .dlg-head #offQ{background:rgba(255,255,255,.14)!important;color:#fff!important;border-color:rgba(255,255,255,.35)!important}
+#offersDlg .dlg-head #offQ::placeholder{color:rgba(255,255,255,.75)}
+#offersDlg .dlg-head #closeOffers{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+#offersDlg .dlg-head #offAdd{background:#fff;color:#163159;border-color:#fff}
+.offbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--surface)}
+.offbar button{display:flex;gap:6px;align-items:center;border-radius:999px;padding:5px 12px;font-size:13px}
+.offbar button b{font-variant-numeric:tabular-nums}
+.offbar button[aria-pressed="true"]{background:#163159;color:#fff;border-color:#163159}
+.offlist{padding:16px 18px 20px;display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));background:var(--soft)}
+.ticket{position:relative;border-radius:16px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;box-shadow:0 3px 12px rgba(22,49,89,.10);min-width:0}
+.tk-top{background:linear-gradient(120deg,#163159,#1986af);color:#fff;border-radius:15px 15px 0 0;padding:14px 16px 16px;display:grid;gap:2px;position:relative}
+.tk-vendor{font-size:11px;letter-spacing:.06em;opacity:.8;font-weight:700}
+.tk-code{font-family:var(--f-mono);font-size:21px;font-weight:700;line-height:1.2;word-break:break-word;padding-inline-end:84px}
+.tk-title{font-size:12.5px;opacity:.9}
+.tk-price{position:absolute;inset-inline-end:12px;top:12px;background:#fff;color:#163159;border-radius:12px;padding:4px 10px;text-align:center;line-height:1.1;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.tk-price b{display:block;font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.tk-price small{font-size:10.5px;font-weight:700;opacity:.75}
+.tk-cut{position:relative;height:0;border-top:2px dashed var(--line);margin:0 16px}
+.tk-cut::before,.tk-cut::after{content:"";position:absolute;top:-12px;width:22px;height:22px;border-radius:50%;background:var(--soft);border:1px solid var(--line)}
+.tk-cut::before{right:-29px}.tk-cut::after{left:-29px}
+.tk-body{padding:12px 16px 14px;display:grid;gap:10px;flex:1;align-content:start}
+.tk-inc{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px}
+.tk-inc li{display:flex;gap:6px}.tk-inc li::before{content:"✓";color:var(--ok);font-weight:800}
+.tk-time{display:flex;gap:8px;align-items:center;font-size:12.5px;font-weight:700}
+.tk-pill{border-radius:999px;padding:2px 10px;background:var(--t-booked);color:var(--c-booked)}
+.tk-pill.soon{background:var(--t-price);color:var(--c-price)}
+.tk-pill.done{background:var(--t-lost);color:var(--c-lost)}
+.tk-who{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--soft);border-radius:10px;padding:6px 10px;font-size:13px}
+.tk-who button{padding:3px 10px;font-size:12.5px}
+.tk-msg summary{cursor:pointer;font-size:12.5px;color:var(--muted);font-weight:700}
+.tk-bubble{margin-top:6px;background:var(--t-int);color:var(--ink);border-radius:12px 12px 2px 12px;padding:8px 10px;font-size:12.5px;white-space:pre-wrap;line-height:1.6}
+.tk-acts{display:flex;gap:6px;padding:0 16px 14px}
+.tk-acts .primary{flex:1}
+.tk-acts button{padding:6px 10px;font-size:13px}
+.ticket.off .tk-top{background:linear-gradient(120deg,#5d6a80,#8a94a6)}
+.ticket.off{opacity:.8}
+.tk-stamp{position:absolute;top:44%;inset-inline-start:50%;transform:translate(50%,-50%) rotate(-12deg);border:3px solid var(--warn);color:var(--warn);font-weight:800;font-size:20px;padding:2px 14px;border-radius:8px;opacity:.75;pointer-events:none;background:var(--surface)}
+[dir=ltr] .tk-stamp{transform:translate(-50%,-50%) rotate(-12deg)}
+.offlist .empty{grid-column:1/-1}
+#offersBtn{background:linear-gradient(120deg,#163159,#1986af);color:#fff;border:0;border-radius:999px;font-weight:800;display:inline-flex;gap:6px;align-items:center;box-shadow:0 2px 8px rgba(25,134,175,.35);position:relative}
+#offersBtn:hover{filter:brightness(1.12)}
+#offCount{background:#fff;color:#163159;border-radius:999px;min-width:20px;height:20px;padding:0 6px;font-size:12px;line-height:20px;text-align:center;font-variant-numeric:tabular-nums}
+@media (max-width:560px){#offersDlg .dlg-head{flex-wrap:wrap}#offersDlg .dlg-head h2{flex:1}#offersDlg #offQ{order:5;flex:1 1 100%;width:auto!important}}
+.offform{border-bottom:1px solid var(--line);background:var(--soft)}
+.offhint,.offerhint{grid-column:1/-1;background:var(--t-booked);border:1px solid var(--c-booked);border-radius:8px;padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-weight:700}
+.offerhint span{flex:1 1 240px}
 .remain{font-size:18px;font-weight:800;color:var(--ink);padding:4px 0;font-variant-numeric:tabular-nums}
 .remain.due{color:var(--warn)}
 .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
@@ -200,11 +258,14 @@ textarea{min-height:70px;resize:vertical}
 <header><div class="wrap">
   <img src="logo.png" alt="3ARAB EL IT" class="hdr-logo">
   <h1>CRM العملاء <small id="syncNote">جاري التحميل…</small></h1>
+  <div class="pricebox"><input id="priceQ" type="search" placeholder="🔎 سعر اختبار… (مثال: AZ-104)" aria-label="بحث عن سعر اختبار" autocomplete="off">
+    <div id="priceRes" class="priceres" hidden></div></div>
   <span class="grow"></span>
   <span class="who" id="whoAmI"></span>
   <input type="file" id="importFile" accept=".csv,text/csv" hidden>
   <button id="importBtn" type="button">استيراد CSV</button>
   <button id="exportBtn" type="button">تصدير CSV</button>
+  <button id="offersBtn" type="button"><span aria-hidden="true">🏷️</span> العروض <b id="offCount" hidden></b></button>
   <button id="reportsBtn" type="button">التقارير</button>
   <button id="rulesBtn" type="button">الإعدادات</button>
   <button id="soundBtn" type="button" class="warnbtn">🔇 اضغطي لتشغيل الصوت</button>
@@ -287,6 +348,7 @@ textarea{min-height:70px;resize:vertical}
     <label>حساب تلقائي<span class="quick"><button type="button" id="autoBtn">احسب الميعاد حسب القواعد</button></span><span id="autoNote" class="sub"></span></label>
     <label class="full">ملاحظات<textarea id="f_notes"></textarea></label>
 
+    <div class="offerhint" id="offerHint" hidden></div>
     <div class="sec">رسالة متابعة جاهزة</div>
     <div class="tpl">
       <label>رسالة العميل الخاصة (بتتحفظ مع العميل)<textarea id="f_followMsg" rows="3" placeholder="رسالة مكتوبة على حسب محادثة العميل ده"></textarea></label>
@@ -332,6 +394,24 @@ textarea{min-height:70px;resize:vertical}
     <span class="grow"></span><button type="button" id="applyRules">طبّق على العملاء اللي ملهمش ميعاد</button></div>
 </dialog>
 
+<dialog id="offersDlg">
+  <div class="dlg-head"><h2>🏷️ العروض</h2><input id="offQ" placeholder="دوّري على اختبار…" aria-label="بحث في العروض" style="font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0;width:170px">
+    <button type="button" id="offAdd" class="primary">+ عرض جديد</button><button type="button" id="closeOffers" aria-label="إغلاق">✕</button></div>
+  <div id="offForm" class="grid offform" hidden>
+    <label>الاختبار<input id="o_exam" list="examsList" dir="auto" placeholder="مثال: AZ-104"></label>
+    <label>عنوان العرض (اختياري)<input id="o_title" placeholder="مثال: عرض نوفمبر"></label>
+    <label>السعر بالدولار<input id="o_price" type="number" min="0" step="any" inputmode="decimal"></label>
+    <label>ساري لحد<input id="o_until" type="date"></label>
+    <label class="full">المتضمَّن في العرض<input id="o_includes" placeholder="مثال: فاوتشر رسمي + حجز الميعاد + المتابعة لحد يوم الامتحان"></label>
+    <label class="full">الرسالة الجاهزة<textarea id="o_msg" rows="4"></textarea>
+      <span class="sub">بتتبدّل لوحدها: {name} اسم العميل، {exam} الاختبار، {price} السعر، {includes} المتضمَّن، {until} آخر ميعاد.</span></label>
+    <label><span><input type="checkbox" id="o_active" checked style="width:auto"> العرض شغال</span></label>
+    <span class="quick" style="grid-column:1/-1"><button type="button" class="primary" id="o_save">حفظ العرض</button><button type="button" id="o_cancel">إلغاء</button><span class="grow"></span><button type="button" class="danger" id="o_del" hidden>حذف العرض</button></span>
+  </div>
+  <div id="offBar" class="offbar" role="group" aria-label="فلترة العروض"></div>
+  <div id="offList" class="offlist"></div>
+  <datalist id="examsList"></datalist>
+</dialog>
 <dialog id="repDlg">
   <div class="dlg-head"><h2>التقارير</h2>
     <select id="repPeriod" aria-label="الفترة"><option value="7">آخر 7 أيام</option><option value="30" selected>آخر 30 يوم</option><option value="0">من الأول</option></select>
@@ -423,6 +503,15 @@ function toDb(o){const r={};for(const [k,c] of Object.entries(COLS)){if(!(k in o
 /* ================= state ================= */
 let SB=null,session=null,profile=null,TEAM=[],teamById={},rows=[],editingId=null,delArmed=false,autoLabel="",dupOk=false,curLog=[];
 let RULES=JSON.parse(JSON.stringify(DEFAULT_RULES)),TEMPLATES={...DEFAULT_TPL};
+let OFFERS=[],editingOffer=null,offDelArmed=false;
+const DEFAULT_OFFER_MSG="باشمهندس {name}، عندنا عرض على {exam}: {price} دولار ({includes}). العرض ساري لحد {until}. تحب نحجزلك؟";
+const examKey=s=>String(s||"").toUpperCase().replace(/[\s\-_.]/g,"");
+const offerLive=o=>o.active&&(!o.valid_until||o.valid_until>=today());
+function offerFor(r){const k=examKey(r&&r.exam);if(!k)return null;
+  return OFFERS.filter(offerLive).find(o=>{const ok=examKey(o.exam);return ok&&(k.includes(ok)||ok.includes(k))})||null}
+function offerText(o,r){const first=((r&&r.name)||"").trim().split(/\s+/)[0]||"";
+  return (o.message||DEFAULT_OFFER_MSG).replaceAll("{name}",first).replaceAll("{exam}",o.exam||"").replaceAll("{price}",o.price!=null&&o.price!==""?(+o.price).toLocaleString("en-US"):"")
+    .replaceAll("{includes}",o.includes||"").replaceAll("{until}",o.valid_until?fmtDate(o.valid_until):"إشعار آخر")}
 const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",campaign:"",year:"",tab:"all",mine:false,sort:(()=>{try{return localStorage.getItem("crm_sort")||"lastDesc"}catch(e){return"lastDesc"}})()};
 const isAdmin=()=>profile&&profile.role==="admin";
 const myName=()=>(profile&&profile.name)||"";
@@ -519,7 +608,7 @@ function render(){
 /* ================= table events ================= */
 $("kpis").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;view.tab=view.tab===b.dataset.tab?"all":b.dataset.tab;render()});
 $("statusChips").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;view.status=b.dataset.st;render()});
-$("q").addEventListener("input",e=>{view.q=e.target.value;render()});
+$("q").addEventListener("input",e=>{view.q=e.target.value;if(!view.q)banner("");render()});
 $("fSort").value=view.sort;$("fSort").addEventListener("change",e=>{view.sort=e.target.value;try{localStorage.setItem("crm_sort",view.sort)}catch(_){}render()});
 $("mineBtn").onclick=()=>{view.mine=!view.mine;render()};
 [["fBrand","brand"],["fChannel","channel"],["fType","type"],["fOwner","owner"],["fReason","reason"],["fCampaign","campaign"],["fYear","year"]].forEach(([id,k])=>$(id).addEventListener("change",e=>{view[k]=e.target.value;render()}));
@@ -536,6 +625,7 @@ async function loadAll(){
 }
 async function loadTeam(){const {data,error}=await SB.from("profiles").select("id,name,role,telegram_chat_id").order("name");if(error)throw error;
   TEAM=data;teamById=Object.fromEntries(data.map(t=>[t.id,t]));profile=teamById[session.user.id]||null}
+async function loadOffers(){const {data,error}=await SB.from("offers").select("*").order("created_at",{ascending:false});if(!error)OFFERS=data||[];const n=OFFERS.filter(offerLive).length,c=$("offCount");if(c){c.hidden=!n;c.textContent=n;$("offersBtn").title=n?n+" عروض شغالة":"العروض"}}
 async function loadConfig(){const {data}=await SB.from("config").select("key,value");
   (data||[]).forEach(c=>{if(c.key==="rules"){const d=c.value||{};RULES={reasons:{...DEFAULT_RULES.reasons,...(d.reasons||{})},noReason:d.noReason??DEFAULT_RULES.noReason,courseDays:d.courseDays??DEFAULT_RULES.courseDays}}
     if(c.key==="templates")TEMPLATES={...DEFAULT_TPL,...(c.value||{})}})}
@@ -638,20 +728,101 @@ $("dupBox").addEventListener("click",e=>{const a=e.target.dataset.dup;if(!a)retu
 /* ================= templates ================= */
 function tplKeyFor(r){const l=(r&&r.followLabel)||"";
   if(r&&r.followMsg)return"custom";
+  if(r&&offerFor(r))return"offer";
   if(r&&payDue(r))return"payment";
   if(l.startsWith("بعد النجاح")||(r&&r.result==="نجح"))return"upsell";if(l.startsWith("رسب")||(r&&r.result==="رسب"))return"retake";
   if(l.startsWith("كورس: نص"))return"course1";if(l.startsWith("كورس: آخر"))return"course2";
   if(r&&REASONS.includes(r.reason))return r.reason;if(r&&r.status==="جاهز للحجز")return"ready";return"general"}
-function tplText(key,r){if(key==="custom")return r.followMsg||"";const first=(r.name||"").trim().split(/\s+/)[0]||"";return (TEMPLATES[key]||DEFAULT_TPL[key]||DEFAULT_TPL.general)
+function tplText(key,r){if(key==="custom")return r.followMsg||"";if(key==="offer"){const o=offerFor(r);return o?offerText(o,r):""}const first=(r.name||"").trim().split(/\s+/)[0]||"";return (TEMPLATES[key]||DEFAULT_TPL[key]||DEFAULT_TPL.general)
   .replaceAll("{name}",first).replaceAll("{exam}",r.exam||"الاختبار").replaceAll("{next}",r.nextCert||"الشهادة اللي بعدها")
   .replaceAll("{remaining}",remaining(r)?fmtMoney(remaining(r),r.currency):"المبلغ").replaceAll("{due}",r.dueDate?fmtDate(r.dueDate):"قريب")}
-function pickTemplate(r){$("tplSel").innerHTML=TPL_KEYS.map(([k,l])=>`<option value="${esc(k)}">${esc(l)}</option>`).join("");
+function pickTemplate(r){const o=offerFor(r);
+  $("tplSel").innerHTML=(o?`<option value="offer">عرض: ${esc(o.exam)}${o.title?" – "+esc(o.title):""}</option>`:"")+TPL_KEYS.map(([k,l])=>`<option value="${esc(k)}">${esc(l)}</option>`).join("");
+  showOfferHint(r);
   const k=tplKeyFor(r);$("tplSel").value=k;$("tplText").value=tplText(k,formData())}
+function showOfferHint(r){const o=offerFor(r),b=$("offerHint");if(!o){b.hidden=true;return}
+  b.hidden=false;b.innerHTML=`<span>🏷️ فيه عرض شغال على ${esc(o.exam)}: ${o.price!=null&&o.price!==""?(+o.price).toLocaleString("en-US")+" دولار":""}${o.valid_until?" · لحد "+fmtDate(o.valid_until):""}</span><button type="button" id="useOffer">استخدم رسالة العرض</button>`;
+  $("useOffer").onclick=()=>{$("tplSel").value="offer";$("tplText").value=offerText(o,formData());$("tplText").scrollIntoView({block:"center"})}}
+$("f_exam").addEventListener("input",()=>{const d=formData();const o=offerFor(d);const cur=$("tplSel").value;pickTemplate(d);$("tplSel").value=o&&cur!=="custom"?"offer":(cur==="offer"?tplKeyFor(d):cur);$("tplText").value=tplText($("tplSel").value,d)});
 $("f_followMsg").addEventListener("input",()=>{if($("tplSel").value==="custom")$("tplText").value=$("f_followMsg").value});
 $("tplSel").addEventListener("change",()=>{$("tplText").value=tplText($("tplSel").value,formData())});
 ["f_reason","f_status","f_due","f_paid"].forEach(id=>$(id).addEventListener("change",()=>{const k=tplKeyFor({...formData(),followLabel:autoLabel});$("tplSel").value=k;$("tplText").value=tplText(k,formData())}));
 async function copyText(t,okMsg){try{await navigator.clipboard.writeText(t);toast(okMsg);return true}catch(e){return false}}
 $("tplCopy").onclick=async()=>{if(!(await copyText($("tplText").value,"اتنسخت الرسالة"))){$("tplText").focus();$("tplText").select();toast("اضغط Ctrl+C للنسخ")}};
+
+/* ================= offers ================= */
+function matchCount(o){const k=examKey(o.exam);return k?rows.filter(r=>{const e=examKey(r.exam);return e&&(e.includes(k)||k.includes(e))}).length:0}
+let offTab="all";
+const VENDORS=[["AZ-|AI-|DP-|MS-|SC-|PL-|MD-|MB-","Microsoft"],["CCNA|CCNP|CCIE|200-|300-|350-","Cisco"],["SECURITY\+|NETWORK\+|A\+|CYSA|PENTEST|CASP","CompTIA"],["NSE|FCP|FCSS|FORTI","Fortinet"],["AWS|SAA|SOA|CLF","AWS"],["PMP|CAPM|PMI","PMI"],["ITIL","PeopleCert"],["PCAP|PCEP|PCPP","Python Institute"],["CISSP|CISM|CISA|CCSP","ISC2 / ISACA"]];
+function vendorOf(ex){const k=String(ex||"").toUpperCase();const v=VENDORS.find(([re])=>new RegExp(re).test(k));return v?v[1]:"شهادة دولية"}
+function daysLeft(o){if(!o.valid_until)return null;return Math.round((new Date(o.valid_until+"T00:00:00")-new Date(today()+"T00:00:00"))/864e5)}
+function offState(o){if(!offerLive(o))return"done";const d=daysLeft(o);return d!=null&&d<=7?"soon":"live"}
+function renderOffers(){const q=examKey($("offQ").value),adm=isAdmin();$("offAdd").hidden=!adm;
+  const base=OFFERS.filter(o=>!q||examKey(o.exam).includes(q)||examKey(o.title).includes(q));
+  const cnt={all:base.length,live:base.filter(o=>offState(o)!=="done").length,soon:base.filter(o=>offState(o)==="soon").length,done:base.filter(o=>offState(o)==="done").length};
+  $("offBar").innerHTML=[["all","كل العروض"],["live","🟢 شغالة"],["soon","⏳ قربت تخلص"],["done","⛔ منتهية / متوقفة"]].map(([k,l])=>`<button type="button" data-ot="${k}" aria-pressed="${offTab===k}">${l} <b>${cnt[k]}</b></button>`).join("");
+  const list=base.filter(o=>offTab==="all"||(offTab==="live"?offState(o)!=="done":offState(o)===offTab)).sort((a,b)=>offerLive(b)-offerLive(a)||(daysLeft(a)??999)-(daysLeft(b)??999));
+  $("offList").innerHTML=list.length?list.map(o=>{const st=offState(o),n=matchCount(o),d=daysLeft(o);
+    const inc=String(o.includes||"").split(/\s*[+،,\n]\s*/).filter(Boolean);
+    const time=st==="done"?`<span class="tk-pill done">${o.active?"انتهى "+fmtDate(o.valid_until):"متوقف"}</span>`
+      :d==null?`<span class="tk-pill">ساري ومفتوح</span>`:`<span class="tk-pill ${st==="soon"?"soon":""}">${d===0?"آخر يوم النهارده":"باقي "+d+(d===1?" يوم":d<=10?" أيام":" يوم")}</span><span class="sub">لحد ${fmtDate(o.valid_until)}</span>`;
+    return `<article class="ticket ${st==="done"?"off":""}">
+      <div class="tk-top"><span class="tk-vendor">${esc(vendorOf(o.exam))}</span><span class="tk-code" dir="ltr">${esc(o.exam)}</span>${o.title?`<span class="tk-title">${esc(o.title)}</span>`:""}
+        ${o.price!=null&&o.price!==""?`<span class="tk-price"><b>${(+o.price).toLocaleString("en-US")}$</b><small>دولار</small></span>`:""}</div>
+      <div class="tk-cut"></div>
+      <div class="tk-body">
+        ${inc.length?`<ul class="tk-inc">${inc.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+        <div class="tk-time">⏱ ${time}</div>
+        <div class="tk-who"><span>👥 <b>${n}</b> عميل ممكن يناسبهم</span>${n?`<button type="button" data-o="who" data-id="${esc(o.id)}">وريني</button>`:""}</div>
+        <details class="tk-msg"><summary>💬 شكل الرسالة</summary><div class="tk-bubble">${esc(offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،"))}</div></details>
+      </div>
+      <div class="tk-acts"><button type="button" class="primary" data-o="copy" data-id="${esc(o.id)}">📋 نسخ رسالة العرض</button>${adm?`<button type="button" data-o="edit" data-id="${esc(o.id)}">✏️ تعديل</button>`:""}</div>
+      ${st==="done"?`<span class="tk-stamp">${o.active?"منتهي":"متوقف"}</span>`:""}
+    </article>`}).join("")
+    :`<div class="empty"><h2>${OFFERS.length?"مفيش عروض هنا":"لسه مفيش عروض"}</h2>${OFFERS.length?"جربي فلتر تاني.":adm?"دوسي «+ عرض جديد» وضيفي أول عرض.":"الأدمن هو اللي بيضيف العروض."}</div>`;
+  $("examsList").innerHTML=[...new Set(rows.map(r=>r.exam).filter(Boolean))].map(e=>`<option value="${esc(e)}">`).join("")}
+function openOfferForm(o){editingOffer=o||null;offDelArmed=false;$("offForm").hidden=false;
+  $("o_exam").value=o?o.exam:"";$("o_title").value=o?o.title||"":"";$("o_price").value=o&&o.price!=null?o.price:"";$("o_until").value=o?o.valid_until||"":"";
+  $("o_includes").value=o?o.includes||"":"";$("o_msg").value=o?o.message||DEFAULT_OFFER_MSG:DEFAULT_OFFER_MSG;$("o_active").checked=o?!!o.active:true;
+  $("o_del").hidden=!o;$("o_del").textContent="حذف العرض";$("o_exam").focus()}
+$("offersBtn").onclick=async()=>{$("offForm").hidden=true;renderOffers();$("offersDlg").showModal();await loadOffers();renderOffers()};
+$("closeOffers").onclick=()=>$("offersDlg").close();
+$("offQ").addEventListener("input",renderOffers);
+$("offBar").addEventListener("click",e=>{const b=e.target.closest("[data-ot]");if(b){offTab=b.dataset.ot;renderOffers()}});
+$("offAdd").onclick=()=>openOfferForm(null);
+$("o_cancel").onclick=()=>{$("offForm").hidden=true};
+$("o_save").onclick=async()=>{const exam=$("o_exam").value.trim();if(!exam){$("o_exam").focus();toast("اكتبي اسم الاختبار");return}
+  const d={exam,title:$("o_title").value.trim(),price:$("o_price").value===""?null:parseFloat($("o_price").value),valid_until:$("o_until").value||null,
+    includes:$("o_includes").value.trim(),message:$("o_msg").value.trim(),active:$("o_active").checked,updated_at:new Date().toISOString()};
+  $("o_save").disabled=true;
+  try{const q=editingOffer?SB.from("offers").update(d).eq("id",editingOffer.id):SB.from("offers").insert(d);const {error}=await q;if(error)throw error;
+    await loadOffers();$("offForm").hidden=true;renderOffers();render();toast(editingOffer?"اتحفظ العرض":"اتضاف العرض")}catch(e){toast(errMsg(e))}finally{$("o_save").disabled=false}};
+$("o_del").onclick=async()=>{if(!offDelArmed){offDelArmed=true;$("o_del").textContent="اضغطي تاني للتأكيد";return}
+  try{const {error}=await SB.from("offers").delete().eq("id",editingOffer.id);if(error)throw error;await loadOffers();$("offForm").hidden=true;renderOffers();toast("اتحذف العرض")}catch(e){toast(errMsg(e))}};
+$("offList").addEventListener("click",async e=>{const b=e.target.closest("[data-o]");if(!b)return;const o=OFFERS.find(x=>x.id===b.dataset.id);if(!o)return;
+  if(b.dataset.o==="edit")openOfferForm(o);
+  if(b.dataset.o==="copy"){if(!(await copyText(offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،"),"اتنسخت رسالة العرض")))toast("مقدرتش أنسخ")}
+  if(b.dataset.o==="who"){$("offersDlg").close();view.q=o.exam;$("q").value=o.exam;view.tab="all";view.status="";render();
+    banner(`العملاء اللي سألوا عن ${o.exam}: افتحي أي عميل وهتلاقي رسالة العرض جاهزة. امسحي البحث فوق عشان ترجعي لكل العملاء.`);$("q").scrollIntoView({block:"center"})}});
+
+/* ================= quick price search ================= */
+function renderPrice(){const q=examKey($("priceQ").value),box=$("priceRes");if(!q){box.hidden=true;return}
+  const m=OFFERS.filter(o=>{const k=examKey(o.exam),t=examKey(o.title);return k.includes(q)||q.includes(k)&&k.length>2||t.includes(q)})
+    .sort((a,b)=>offerLive(b)-offerLive(a));
+  box.hidden=false;
+  box.innerHTML=m.length?m.slice(0,8).map(o=>`<div class="pr"><b><span>${esc(o.exam)}${o.title?` <span class="sub">${esc(o.title)}</span>`:""}</span>
+      <span class="p">${o.price!=null&&o.price!==""?(+o.price).toLocaleString("en-US")+" $":"من غير سعر"}</span></b>
+      ${o.includes?`<span class="sub">${esc(o.includes)}</span>`:""}
+      <span class="sub">${offerLive(o)?(o.valid_until?"ساري لحد "+fmtDate(o.valid_until):"ساري"):"⚠️ "+(o.active?"انتهى "+fmtDate(o.valid_until):"متوقف")}</span>
+      <span class="acts"><button type="button" data-pc="${esc(o.id)}">نسخ رسالة العرض</button><button type="button" data-pw="${esc(o.id)}">مين سأل عنه؟</button></span></div>`).join("")
+    :`<div class="pr"><b>مفيش سعر متسجل لـ «${esc($("priceQ").value.trim())}»</b><span class="sub">${isAdmin()?"ضيفيه من «العروض» ← «+ عرض جديد»، ومن غير تاريخ انتهاء لو ده سعره الثابت.":"اطلبي من الأدمن يضيفه في «العروض»."}</span></div>`}
+$("priceQ").addEventListener("input",renderPrice);
+$("priceQ").addEventListener("focus",renderPrice);
+$("priceQ").addEventListener("keydown",e=>{if(e.key==="Escape"){$("priceQ").value="";renderPrice()}});
+document.addEventListener("click",e=>{if(!e.target.closest(".pricebox"))$("priceRes").hidden=true});
+$("priceRes").addEventListener("click",async e=>{const c=e.target.closest("[data-pc]"),w=e.target.closest("[data-pw]");
+  if(c){const o=OFFERS.find(x=>x.id===c.dataset.pc);if(o&&!(await copyText(offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،"),"اتنسخت رسالة العرض")))toast("مقدرتش أنسخ")}
+  if(w){const o=OFFERS.find(x=>x.id===w.dataset.pw);if(o){$("priceRes").hidden=true;view.q=o.exam;$("q").value=o.exam;view.tab="all";view.status="";render();$("q").scrollIntoView({block:"center"})}}});
 
 /* ================= reports ================= */
 function bars(title,groups,showWin){const max=Math.max(1,...groups.map(g=>g.n));
@@ -807,7 +978,7 @@ async function startApp(){
   $("loginView").hidden=true;$("appView").hidden=false;
   try{await loadTeam();
     if(!profile||profile.role==="pending"){banner("حسابك لسه مستني تفعيل. اطلب من الأدمن يفعّلك من الإعدادات.");$("syncNote").textContent="";return}
-    showWho();await loadConfig();await loadAll();render();subscribe();checkReminders();askNotify();
+    showWho();await loadConfig();await loadOffers();await loadAll();render();subscribe();checkReminders();askNotify();
     setInterval(()=>{checkReminders();render()},20000);
   }catch(e){console.error(e);banner("مش قادر أوصل للبيانات: "+errMsg(e))}
 }
