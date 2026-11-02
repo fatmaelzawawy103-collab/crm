@@ -263,7 +263,7 @@ textarea{min-height:70px;resize:vertical}
     <label id="lb_cdays">مدة الكورس (أيام)<input type="number" min="1" id="f_cdays" inputmode="numeric"></label>
     <label>ميعاد المتابعة<input type="date" id="f_follow">
       <span class="quick" data-for="f_follow"><button type="button" data-d="0">النهارده</button><button type="button" data-d="1">بكرة</button><button type="button" data-d="3">بعد 3 أيام</button><button type="button" data-d="7">بعد أسبوع</button></span></label>
-    <label>ساعة المتابعة<select id="f_ftime"></select>
+    <label>ساعة المتابعة (بالدقيقة)<input type="time" id="f_ftime" step="60">
       <span class="quick"><button type="button" id="inHour">بعد ساعة</button><button type="button" id="in15">بعد 15 دقيقة</button></span></label>
     <label>حساب تلقائي<span class="quick"><button type="button" id="autoBtn">احسب الميعاد حسب القواعد</button></span><span id="autoNote" class="sub"></span></label>
     <label class="full">ملاحظات<textarea id="f_notes"></textarea></label>
@@ -415,8 +415,7 @@ fillSelect($("fBrand"),BRANDS,"كل الصفحات");fillSelect($("fChannel"),CH
 fillSelect($("fReason"),REASONS,"كل أسباب التوقف");fillSelect($("fOwner"),[],"كل المسؤولين");fillSelect($("fCampaign"),[],"كل الحملات");
 fillSelect($("f_currency"),CURRENCIES);
 $("countriesList").innerHTML=COUNTRIES.map(c=>`<option value="${c}">`).join("");
-(()=>{const o=[["","— بدون ساعة —"]];for(let h=8;h<24;h++)for(let m=0;m<60;m+=15){const v=`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`;o.push([v,fmtTime(v)])}fillSelect($("f_ftime"),o)})();
-function ensureTimeOpt(v){if(v&&![...$("f_ftime").options].some(o=>o.value===v)){const o=document.createElement("option");o.value=v;o.textContent=fmtTime(v);$("f_ftime").appendChild(o)}}
+function ensureTimeOpt(v){} /* الساعة بقت خانة بالدقيقة */
 function fillOwners(cur){const names=[...new Set([...TEAM.map(t=>t.name),cur].filter(Boolean))];fillSelect($("f_owner"),names,"— بدون —");$("f_owner").value=cur||""}
 
 /* ================= follow-up rules ================= */
@@ -432,7 +431,7 @@ function autoFollow(r,fromDay){
   return {date:addDays(base,RULES.noReason),label:"متابعة عامة"};
 }
 function fuState(r){const t=today();if(!r.followUp||isClosed(r))return"";return r.followUp===t?"today":r.followUp<t?"late":"later"}
-function minsTo(r){if(!r.followUp||!r.followTime||isClosed(r))return null;const t=new Date(r.followUp+"T"+r.followTime).getTime();return isNaN(t)?null:(t-Date.now())/60000}
+function minsTo(r){if(!r.followUp||!r.followTime||r.status==="غير مهتم")return null;const t=new Date(r.followUp+"T"+r.followTime).getTime();return isNaN(t)?null:(t-Date.now())/60000}
 
 /* ================= render ================= */
 function baseFiltered(){const q=view.q.trim().toLowerCase(),me=myName();
@@ -540,7 +539,7 @@ function toggleCourse(){const c=isCourse($("f_type").value);$("lb_cstart").hidde
 $("f_type").addEventListener("change",toggleCourse);
 document.querySelectorAll(".quick[data-for]").forEach(q=>q.addEventListener("click",e=>{const b=e.target.closest("[data-d]");if(!b)return;
   $(q.dataset.for).value=addDays(today(),+b.dataset.d);if(q.dataset.for==="f_follow")setAuto("ميعاد محدد")}));
-function setIn(mins){const d=new Date(Date.now()+mins*60000);d.setMinutes(Math.ceil(d.getMinutes()/15)*15,0,0);
+function setIn(mins){const d=new Date(Date.now()+mins*60000);d.setSeconds(0,0);
   $("f_follow").value=ymd(d);const v=hhmm(d);ensureTimeOpt(v);$("f_ftime").value=v;setAuto("ميعاد محدد")}
 $("inHour").onclick=()=>setIn(60);$("in15").onclick=()=>setIn(15);
 $("f_follow").addEventListener("change",()=>setAuto("ميعاد محدد"));
@@ -702,14 +701,14 @@ function markNotified(k){notified[k]=Date.now();try{localStorage.setItem("crm_no
 const baseTitle=document.title;let flash=null,pending=0;
 function flashTitle(){if(flash)return;let on=false;flash=setInterval(()=>{document.title=on?baseTitle:`🔔 (${pending}) تذكير متابعة`;on=!on},1000)}
 function stopFlash(){if(!pending&&flash){clearInterval(flash);flash=null;document.title=baseTitle}}
-function showReminder(r,mins,test){
+function showReminder(r,mins,test,exam){
   pending++;flashTitle();const box=document.createElement("div");box.className="rem";box.setAttribute("role","alert");
   box.innerHTML=`<div class="rem-top"><div class="rem-av">${esc((r.name||"؟").trim()[0])}</div>
-      <div><div class="rem-kicker">🔔 تذكير متابعة · ${fmtTime(r.followTime)||""}</div><b>تواصل مع ${esc(r.name)} بعد ${mins} ${mins>2&&mins<=10?"دقائق":"دقيقة"}</b>
+      <div><div class="rem-kicker">${exam?"📝 تذكير امتحان":"🔔 تذكير متابعة"} · ${fmtTime(r.followTime)||""}</div><b>${exam?`امتحان ${esc(r.name)} بعد`:`تواصل مع ${esc(r.name)} بعد`} ${mins} ${mins>2&&mins<=10?"دقائق":"دقيقة"}</b>
       <div class="sub"><span class="mono">${esc(r.phone||"")}</span>${r.exam?" · "+esc(r.exam):""}${r.channel?" · "+esc(r.channel):""}</div></div>
       <button type="button" class="rem-x" data-a="close" aria-label="إغلاق">✕</button></div>
     ${r.summary?`<div class="sub">${esc(r.summary)}</div>`:""}
-    <div class="acts">${test?"":`<button type="button" class="okbtn" data-a="done">✓ تابعت</button><button type="button" data-a="copy">نسخ الرسالة</button><button type="button" data-a="snooze">أجّل 15 د</button><button type="button" data-a="open">فتح العميل</button>`}
+    <div class="acts">${test||exam?"":`<button type="button" class="okbtn" data-a="done">✓ تابعت</button><button type="button" data-a="copy">نسخ الرسالة</button><button type="button" data-a="snooze">أجّل 15 د</button><button type="button" data-a="open">فتح العميل</button>`}
       ${waLink(r.phone)?`<a class="btn" href="${waLink(r.phone)}" target="_blank" rel="noopener">واتساب ↗</a>`:""}
       ${r.link&&/^https?:\/\//i.test(r.link)?`<a class="btn" href="${esc(r.link)}" target="_blank" rel="noopener">Meta ↗</a>`:""}</div>`;
   box.addEventListener("click",async e=>{const a=e.target.closest("[data-a]")?.dataset.a;if(!a)return;
@@ -718,9 +717,10 @@ function showReminder(r,mins,test){
     if(a==="open")openDlg(r.id);if(a==="done")markDone(r.id,"تابعت من التنبيه");
     if(a==="snooze"){const d=new Date(Date.now()+15*60000);try{await updateLead(r.id,{followUp:ymd(d),followTime:hhmm(d)});toast("اتأجل 15 دقيقة")}catch(err){toast(errMsg(err))}}});
   $("reminders").appendChild(box);beep();
-  try{if("Notification" in window&&Notification.permission==="granted"){const n=new Notification("تذكير متابعة",{body:`تواصل مع ${r.name} بعد ${mins} دقيقة`,tag:r.id||"test",requireInteraction:true});n.onclick=()=>{window.focus();n.close()}}}catch(e){}
+  try{if("Notification" in window&&Notification.permission==="granted"){const n=new Notification(exam?"تذكير امتحان":"تذكير متابعة",{body:exam?`امتحان ${r.name} بعد ${mins} دقيقة`:`تواصل مع ${r.name} بعد ${mins} دقيقة`,tag:r.id||"test",requireInteraction:true});n.onclick=()=>{window.focus();n.close()}}}catch(e){}
 }
-function checkReminders(){rows.forEach(r=>{const m=minsTo(r);if(m===null||m<=0||m>10)return;const k=r.id+"|"+r.followUp+"|"+r.followTime;if(notified[k])return;markNotified(k);showReminder(r,Math.max(1,Math.ceil(m)))})}
+function minsToExam(r){if(!r.examDate||!r.examTime||r.status==="غير مهتم")return null;const t=new Date(r.examDate+"T"+r.examTime).getTime();return isNaN(t)?null:(t-Date.now())/60000}
+function checkReminders(){rows.forEach(r=>{const e=minsToExam(r);if(e!==null&&e>0&&e<=10){const k="exam|"+r.id+"|"+r.examDate+"|"+r.examTime;if(!notified[k]){markNotified(k);showReminder({...r,followTime:r.examTime},Math.max(1,Math.ceil(e)),false,true)}}});rows.forEach(r=>{const m=minsTo(r);if(m===null||m<=0||m>10)return;const k=r.id+"|"+r.followUp+"|"+r.followTime;if(notified[k])return;markNotified(k);showReminder(r,Math.max(1,Math.ceil(m)))})}
 $("testRem").onclick=()=>{unlockAudio();askNotify();const t=new Date(Date.now()+10*60000);showReminder({name:"عميل تجريبي",phone:"+20 100 000 0000",exam:"AZ-104",channel:"WhatsApp",summary:"ده شكل التنبيه اللي هيطلعلك قبل الميعاد بـ 10 دقايق.",followTime:hhmm(t)},10,true)};
 function askNotify(){try{if("Notification" in window&&Notification.permission==="default")Notification.requestPermission()}catch(e){}}
 
