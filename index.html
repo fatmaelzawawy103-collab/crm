@@ -150,7 +150,7 @@ textarea{min-height:70px;resize:vertical}
 .tk-cut::before{right:-29px}.tk-cut::after{left:-29px}
 .tk-body{padding:12px 16px 14px;display:grid;gap:10px;flex:1;align-content:start}
 .tk-inc{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:13px}
-.tk-inc li{display:flex;gap:6px}.tk-inc li::before{content:"✓";color:var(--ok);font-weight:800}
+.tk-inc li{display:flex;gap:6px}.tk-inc li::before{content:"💎";font-size:11px}
 .tk-time{display:flex;gap:8px;align-items:center;font-size:12.5px;font-weight:700}
 .tk-pill{border-radius:999px;padding:2px 10px;background:var(--t-booked);color:var(--c-booked)}
 .tk-pill.soon{background:var(--t-price);color:var(--c-price)}
@@ -535,10 +535,10 @@ function offerDetails(o){const L=[],v=vendorName(o);
   if(v!=="شهادة دولية")L.push(`🎓 شهادة ${v} الدولية`);
   L.push("━━━━━━━━━━━━");
   if(o.price!=null&&o.price!=="")L.push(`💰 السعر: ${(+o.price).toLocaleString("en-US")}$ بس`);
-  const inc=lines(o.includes);if(inc.length){L.push("","✅ العرض بيشمل:",...inc.map(x=>"✔️ "+x))}
-  const req=lines(o.requirements);if(req.length){L.push("","📋 المطلوب منك:",...req.map(x=>"▫️ "+x))}
+  const inc=lines(o.includes);if(inc.length){L.push("","🎁 العرض بيشمل:",...inc.map(x=>"💎 "+x))}
+  const req=lines(o.requirements);if(req.length){L.push("","📋 المطلوب منك:",...req.map(x=>"📌 "+x))}
   if(o.valid_until)L.push("",`⏳ العرض ساري لحد ${fmtDate(o.valid_until)} بس`);
-  L.push("",`📩 ابعتلي «احجز» وأبدأ معاك فورًا`);
+  L.push("",`💬 تحب أحجزلك؟ قولي بس الميعاد اللي يناسبك وأنا أخلّص الباقي 👌`);
   return L.join("\n")}
 const offMine=o=>String(o.custom_text||"").trim();
 const offMsg=o=>offerText(o,{name:""}).replace("باشمهندس ،","باشمهندس،");
