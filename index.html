@@ -61,6 +61,12 @@ main .wrap{padding-block:16px 40px;display:grid;gap:14px}
 .kpi span{color:var(--muted);font-size:13px;font-weight:600}
 .kpi.on{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .kpi.alert b{color:var(--warn)}
+#todoBtn{background:var(--t-price);color:var(--c-price);border:2px solid var(--c-price);border-radius:999px;font-weight:800;display:inline-flex;gap:6px;align-items:center}
+#todoBtn b{background:var(--c-price);color:#fff;border-radius:999px;min-width:22px;height:22px;line-height:22px;padding:0 6px;text-align:center;font-variant-numeric:tabular-nums}
+#todoBtn:not(.has){background:var(--surface);color:var(--muted);border-color:var(--line)}#todoBtn:not(.has) b{background:var(--line);color:var(--muted)}
+#todoBtn[aria-pressed="true"]{background:var(--c-price);color:#fff}#todoBtn[aria-pressed="true"] b{background:#fff;color:var(--c-price)}
+tr.row.fu-today td:first-child{box-shadow:inset -4px 0 0 var(--c-price)}
+.todo-sep td{background:var(--soft)!important;font-weight:800;color:var(--muted);font-size:12.5px;padding:6px 12px}
 .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .filters input,.filters select{font:inherit;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);min-width:0}
 .filters input[type=search]{flex:1 1 220px}
@@ -282,7 +288,8 @@ textarea{min-height:70px;resize:vertical}
   <button id="rulesBtn" type="button">الإعدادات</button>
   <button id="soundBtn" type="button" class="warnbtn">🔇 اضغطي لتشغيل الصوت</button>
   <button id="testRem" type="button">جرّب التنبيه</button>
-  <button id="addBtn" class="primary" type="button">+ عميل جديد</button>
+  <button id="todoBtn" type="button" aria-pressed="false">📅 متابعات النهارده <b id="todoN">0</b></button>
+<button id="addBtn" class="primary" type="button">+ عميل جديد</button>
 </div></header>
 
 <main><div class="wrap">
@@ -294,7 +301,7 @@ textarea{min-height:70px;resize:vertical}
     <select id="fBrand"></select><select id="fChannel"></select><select id="fType"></select>
     <select id="fReason"></select><select id="fCampaign"></select><select id="fOwner"></select>
     <select id="fYear" aria-label="السنة"></select>
-    <select id="fSort" aria-label="الترتيب"><option value="lastDesc">ترتيب: آخر رسالة (الأحدث الأول)</option><option value="lastAsc">ترتيب: آخر رسالة (الأقدم الأول)</option><option value="follow">ترتيب: ميعاد المتابعة</option><option value="added">ترتيب: الأحدث إضافة</option></select>
+    <select id="fSort" aria-label="الترتيب"><option value="smart">ترتيب: متابعات النهارده الأول ⭐</option><option value="lastDesc">ترتيب: آخر رسالة (الأحدث الأول)</option><option value="lastAsc">ترتيب: آخر رسالة (الأقدم الأول)</option><option value="follow">ترتيب: ميعاد المتابعة</option><option value="added">ترتيب: الأحدث إضافة</option></select>
   </div>
   <div class="chips" id="statusChips"></div>
   <div class="tablebox">
@@ -545,7 +552,7 @@ const offMsg=o=>offerText(o,{name:""}).replace("باشمهندس ،","باشمه
 function offerText(o,r){const first=((r&&r.name)||"").trim().split(/\s+/)[0]||"";
   return (o.message||DEFAULT_OFFER_MSG).replaceAll("{name}",first).replaceAll("{exam}",o.exam||"").replaceAll("{price}",o.price!=null&&o.price!==""?(+o.price).toLocaleString("en-US"):"")
     .replaceAll("{includes}",o.includes||"").replaceAll("{until}",o.valid_until?fmtDate(o.valid_until):"إشعار آخر")}
-const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",campaign:"",year:"",tab:"all",mine:false,sort:(()=>{try{return localStorage.getItem("crm_sort")||"lastDesc"}catch(e){return"lastDesc"}})()};
+const view={q:"",status:"",brand:"",channel:"",type:"",owner:"",reason:"",campaign:"",year:"",tab:"all",mine:false,sort:(()=>{try{return localStorage.getItem("crm_sort2")||"smart"}catch(e){return"lastDesc"}})()};
 const isAdmin=()=>profile&&profile.role==="admin";
 const myName=()=>(profile&&profile.name)||"";
 
@@ -586,6 +593,8 @@ function render(){
   const nSoon=base.filter(soon).length,nToday=base.filter(r=>fuState(r)==="today").length,nLate=base.filter(r=>fuState(r)==="late").length,nNo=base.filter(r=>r.reply==="لا").length;
   const in7=addDays(today(),7),examSoon=r=>r.examDate&&r.examDate>=today()&&r.examDate<=in7;
   const nPay=base.filter(payDue).length,nExam=base.filter(examSoon).length;
+  $("todoN").textContent=nToday+nLate;$("todoBtn").setAttribute("aria-pressed",view.tab==="todo");$("todoBtn").classList.toggle("has",nToday+nLate>0);
+  $("todoBtn").title=`${nToday} النهارده + ${nLate} متأخرة`;
   $("kpis").innerHTML=[["all","كل العملاء",base.length,""],["soon","خلال ساعة",nSoon,""],["today","متابعات النهارده",nToday,""],["late","متابعات متأخرة",nLate,nLate?"alert":""],["noreply","لم يتم الرد",nNo,nNo?"alert":""],["pay","دفعات مستحقة",nPay,nPay?"alert":""],["exam","امتحانات الأسبوع",nExam,""],["booked","تم الحجز",counts["تم الحجز"]||0,""]]
     .map(([k,l,n,c])=>`<button type="button" class="kpi ${c} ${view.tab===k?"on":""}" data-tab="${k}"><b>${n}</b><span>${l}</span></button>`).join("");
   $("statusChips").innerHTML=`<button type="button" class="chip ${!view.status?"on":""}" data-st="">كل الحالات <em>${base.length}</em></button>`+
@@ -593,6 +602,7 @@ function render(){
   let list=base.filter(r=>!view.status||r.status===view.status);
   if(view.tab==="soon")list=list.filter(soon);
   if(view.tab==="today")list=list.filter(r=>fuState(r)==="today");
+  if(view.tab==="todo")list=list.filter(r=>["today","late"].includes(fuState(r)));
   if(view.tab==="late")list=list.filter(r=>fuState(r)==="late");
   if(view.tab==="noreply")list=list.filter(r=>r.reply==="لا");
   if(view.tab==="booked")list=list.filter(r=>r.status==="تم الحجز");
@@ -600,10 +610,11 @@ function render(){
   if(view.tab==="exam")list=list.filter(examSoon).sort((a,b)=>(a.examDate+a.examTime).localeCompare(b.examDate+b.examTime));
   const rank=r=>({today:0,late:1}[fuState(r)]??2),tm=r=>r.followTime||"99";
   const byLast=(a,b)=>(b.lastMsg||"").localeCompare(a.lastMsg||"")||(b.createdAt||0)-(a.createdAt||0);
+  const bySmart=(a,b)=>rank(a)-rank(b)||(rank(a)<2?(rank(a)===0?tm(a).localeCompare(tm(b)):(a.followUp||"").localeCompare(b.followUp||"")):0)||byLast(a,b);
   const byFollow=(a,b)=>rank(a)-rank(b)||(a.followUp||"9999").localeCompare(b.followUp||"9999")||tm(a).localeCompare(tm(b))||byLast(a,b);
   /* تبويبات المتابعة دايماً بالساعة؛ غير كده حسب اختيار الترتيب */
-  const srt=["today","late","soon"].includes(view.tab)?"follow":view.sort;
-  if(view.tab!=="exam")list.sort(srt==="follow"?byFollow:srt==="lastAsc"?(a,b)=>-byLast(a,b):srt==="added"?(a,b)=>(b.createdAt||0)-(a.createdAt||0):byLast);
+  const srt=["today","late","soon"].includes(view.tab)?"follow":view.tab==="todo"?"smart":view.sort;
+  if(view.tab!=="exam")list.sort(srt==="smart"?bySmart:srt==="follow"?byFollow:srt==="lastAsc"?(a,b)=>-byLast(a,b):srt==="added"?(a,b)=>(b.createdAt||0)-(a.createdAt||0):byLast);
   const badges=r=>{const b=[],rem=remaining(r);
     if(rem>0)b.push(`<span class="bdg money ${payDue(r)?"late":""}" title="${r.dueDate?"ميعاد الدفع "+fmtDate(r.dueDate):""}">💰 ${esc(fmtMoney(rem,r.currency))}${r.dueDate?" · "+fmtDate(r.dueDate):""}</span>`);
     if(r.examDate)b.push(`<span class="bdg exam">📝 ${fmtDate(r.examDate)}${r.examTime?" "+fmtTime(r.examTime):""}</span>`);
@@ -639,10 +650,11 @@ function render(){
 }
 
 /* ================= table events ================= */
+$("todoBtn").addEventListener("click",()=>{view.tab=view.tab==="todo"?"all":"todo";view.status="";render();document.querySelector("table")?.scrollIntoView({behavior:"smooth",block:"start"})});
 $("kpis").addEventListener("click",e=>{const b=e.target.closest("[data-tab]");if(!b)return;view.tab=view.tab===b.dataset.tab?"all":b.dataset.tab;render()});
 $("statusChips").addEventListener("click",e=>{const b=e.target.closest("[data-st]");if(!b)return;view.status=b.dataset.st;render()});
 $("q").addEventListener("input",e=>{view.q=e.target.value;if(!view.q)banner("");render()});
-$("fSort").value=view.sort;$("fSort").addEventListener("change",e=>{view.sort=e.target.value;try{localStorage.setItem("crm_sort",view.sort)}catch(_){}render()});
+$("fSort").value=view.sort;$("fSort").addEventListener("change",e=>{view.sort=e.target.value;try{localStorage.setItem("crm_sort2",view.sort)}catch(_){}render()});
 $("mineBtn").onclick=()=>{view.mine=!view.mine;render()};
 [["fBrand","brand"],["fChannel","channel"],["fType","type"],["fOwner","owner"],["fReason","reason"],["fCampaign","campaign"],["fYear","year"]].forEach(([id,k])=>$(id).addEventListener("change",e=>{view[k]=e.target.value;render()}));
 $("tbody").addEventListener("change",async e=>{const s=e.target.closest(".stsel");if(!s)return;
