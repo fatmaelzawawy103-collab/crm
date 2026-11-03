@@ -73,7 +73,7 @@ tr.row.is-next{outline:2px solid var(--c-price);outline-offset:-2px}
 #payDlg .dlg-head{background:linear-gradient(120deg,#0f7a5a,#1aa37a);color:#fff;border-bottom:0;flex-wrap:wrap}
 #payDlg .dlg-head h2{color:#fff}
 #payDlg .dlg-head button{border-color:rgba(255,255,255,.45);background:transparent;color:#fff}
-#payDlg .dlg-head #payAll{background:#fff;color:#0f7a5a;border-color:#fff}
+#payDlg .dlg-head #payQ{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;min-width:0;width:190px}#payDlg .dlg-head #payQ::placeholder{color:rgba(255,255,255,.8)}
 .payfoot{padding:10px 18px;border-bottom:1px solid var(--line);display:grid}
 .paycountry{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--surface)}
 .paycountry label{display:flex!important;flex-direction:row;gap:8px;align-items:center;font-weight:800;white-space:nowrap}
@@ -88,7 +88,7 @@ tr.row.is-next{outline:2px solid var(--c-price);outline-offset:-2px}
 .pc-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:var(--t-int);flex:none}
 .pc-name{font-weight:800;font-size:15px;line-height:1.3}
 .pc-for{font-size:12px;color:var(--muted)}
-.pc-det{margin:12px 14px 0;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px dashed var(--c-int);font-family:var(--f-mono);font-size:13.5px;white-space:pre-wrap;overflow-wrap:anywhere;unicode-bidi:plaintext}
+.pc-det{margin:12px 14px 0;padding:10px 12px;border-radius:10px;background:var(--bg);border:1px dashed var(--c-int);font-family:var(--f-mono);font-size:13.5px;white-space:pre-wrap;overflow-wrap:anywhere;unicode-bidi:plaintext;font-family:var(--f-body);white-space:pre-wrap;line-height:1.7;text-align:right}
 .pc-note{margin:8px 14px 0;font-size:12.5px;color:var(--muted)}
 .pc-acts{display:flex;gap:6px;padding:12px 14px 14px;margin-top:auto}
 .pc-acts .primary{flex:1;background:#0f7a5a;border-color:#0f7a5a;color:#fff}
@@ -382,7 +382,7 @@ textarea{min-height:70px;resize:vertical}
     <label>المدفوع<input id="f_paid" type="number" min="0" step="any" inputmode="decimal"></label>
     <label>العملة<select id="f_currency"></select></label>
     <label>المتبقي<output id="remainOut" class="remain">—</output></label>
-    <div class="paycopy full"><button type="button" id="copyPayFor">💳 نسخ وسائل الدفع المناسبة</button><span class="sub" id="payForNote"></span></div>
+    <div class="paycopy full"><button type="button" id="copyPayFor">💳 نسخ بيانات التحويل لدولة العميل</button><span class="sub" id="payForNote"></span></div>
     <label>ميعاد دفع المتبقي (دفع مؤجل)<input type="date" id="f_due">
       <span class="quick" data-for="f_due"><button type="button" data-d="7">بعد أسبوع</button><button type="button" data-d="14">بعد أسبوعين</button><button type="button" data-d="30">بعد شهر</button></span></label>
 
@@ -449,18 +449,14 @@ textarea{min-height:70px;resize:vertical}
 </dialog>
 
 <dialog id="payDlg">
-  <div class="dlg-head"><h2>💳 وسائل الدفع</h2><span class="grow"></span>
-    <button type="button" id="payAll" class="primary">📋 نسخ كل الوسائل</button><button type="button" id="payAdd">+ وسيلة</button><button type="button" id="closePay" aria-label="إغلاق">✕</button></div>
+  <div class="dlg-head"><h2>💳 وسائل الدفع</h2><input id="payQ" placeholder="🌍 دوّري على دولة…" aria-label="بحث بالدولة"><span class="grow"></span>
+    <button type="button" id="payAdd">+ دولة</button><button type="button" id="closePay" aria-label="إغلاق">✕</button></div>
   <div id="payForm" class="grid offform" hidden>
-    <label>اسم الوسيلة<input id="p_name" list="payNames" placeholder="مثال: فودافون كاش"><datalist id="payNames"><option value="فودافون كاش"><option value="InstaPay"><option value="تحويل بنكي"><option value="PayPal"><option value="Western Union"><option value="بطاقة ائتمان (لينك دفع)"><option value="USDT"></datalist></label>
-    <label>الدول اللي تنفع فيها <span class="sub">— افصلي بـ «،» وسيبيها فاضية = كل الدول</span><input id="p_for" list="countriesList" placeholder="مثال: العراق، الأردن"></label>
-    <label class="full">البيانات اللي العميل بيحوّل عليها <span class="sub">— الرقم / الحساب / اللينك، كل حاجة في سطر</span><textarea id="p_details" dir="auto" rows="3" placeholder="الرقم: 010xxxxxxxx&#10;باسم: ..."></textarea></label>
-    <label class="full">ملاحظة للعميل <span class="sub">(اختياري)</span><input id="p_note" placeholder="مثال: الرسوم على العميل"></label>
-    <label><span><input type="checkbox" id="p_active" checked style="width:auto"> الوسيلة شغالة</span></label>
+    <label class="full">الدولة <span class="sub">— اكتبي أي دولة، أو أكتر من دولة بينهم «،»</span><input id="p_country" list="countriesList" placeholder="مثال: العراق"></label>
+    <label class="full">رسالة بيانات التحويل <span class="sub">— بتكتبيها بنفسك وبتتنسخ زي ما هي</span><textarea id="p_msg" dir="rtl" rows="8" placeholder="اكتبي هنا الرسالة اللي بتبعتيها للعميل فيها بيانات التحويل…"></textarea></label>
+    <label><span><input type="checkbox" id="p_active" checked style="width:auto"> شغالة</span></label>
     <span class="quick" style="grid-column:1/-1"><button type="button" class="primary" id="p_save">حفظ</button><button type="button" id="p_cancel">إلغاء</button><span class="grow"></span><button type="button" class="danger" id="p_del" hidden>حذف</button></span>
   </div>
-  <div class="paycountry"><label>🌍 العميل من:<select id="payCountry"></select></label><span class="sub" id="payCountryNote"></span></div>
-  <div class="payfoot"><label>آخر سطر في رسالة «نسخ كل الوسائل»<input id="payFooter" dir="auto"></label></div>
   <div id="payList" class="paylist"></div>
 </dialog>
 <dialog id="offersDlg">
@@ -730,7 +726,7 @@ async function loadOffers(){const {data,error}=await SB.from("offers").select("*
 async function loadConfig(){const {data}=await SB.from("config").select("key,value");
   (data||[]).forEach(c=>{if(c.key==="rules"){const d=c.value||{};RULES={reasons:{...DEFAULT_RULES.reasons,...(d.reasons||{})},noReason:d.noReason??DEFAULT_RULES.noReason,courseDays:d.courseDays??DEFAULT_RULES.courseDays}}
     if(c.key==="templates")TEMPLATES={...DEFAULT_TPL,...(c.value||{})}
-    if(c.key==="payments"&&c.value)PAY={items:Array.isArray(c.value.items)?c.value.items:[],footer:c.value.footer??PAY.footer}})}
+    if(c.key==="payments"&&c.value)PAY={items:Array.isArray(c.value.items)?c.value.items:[]}})}
 async function insertLead(o){const {data,error}=await SB.from("leads").insert(toDb(o)).select().single();if(error)throw error;const r=fromDb(data);upsertLocal(r);render();return r}
 async function updateLead(id,o){const {data,error}=await SB.from("leads").update(toDb(o)).eq("id",id).select().single();if(error)throw error;const r=fromDb(data);upsertLocal(r);render();return r}
 async function deleteLead(id){const {error}=await SB.from("leads").delete().eq("id",id);if(error)throw error;rows=rows.filter(r=>r.id!==id);render()}
@@ -858,47 +854,43 @@ async function copyText(t,okMsg){try{await navigator.clipboard.writeText(t);toas
 $("tplCopy").onclick=async()=>{if(!(await copyText($("tplText").value,"اتنسخت الرسالة"))){$("tplText").focus();$("tplText").select();toast("اضغط Ctrl+C للنسخ")}};
 
 /* ================= payments ================= */
-let PAY={items:[],footer:"📸 بعد التحويل ابعتلي صورة الإيصال، وأنا أأكدلك الحجز على طول ✅"},editingPay=null;
-const payIco=n=>{n=String(n||"").toLowerCase();return /فودافون|vodafone|اتصالات|اورنج|أورنج|we\b|محفظ|كاش|cash/.test(n)?"📱":/insta|انستا/.test(n)?"⚡":/بنك|bank|تحويل|iban/.test(n)?"🏦":/paypal|باي ?بال/.test(n)?"🅿️":/usdt|crypto|binance|كريبتو/.test(n)?"🪙":/western|ويسترن|moneygram|موني/.test(n)?"🌍":/card|بطاق|visa|فيزا|لينك/.test(n)?"💳":"💰"};
-let payCountry="";
-const cKey=c=>String(c||"").replace(/[\u064B-\u0652]/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/^ال/,"").replace(/\s+/g," ").trim().toLowerCase();
-const payCountries=x=>String(x.for||"").split(/\s*[،,؛;\/\n]\s*|\s+و\s*(?=ال)/).map(cKey).filter(Boolean);
-function payFits(x,country){const cs=payCountries(x);if(!country||!cs.length||cs.some(c=>/^كل|^all|^any/.test(c)))return true;const k=cKey(country);return cs.some(c=>c===k||c.includes(k)||k.includes(c))}
-const payLive=(country)=>PAY.items.filter(x=>x.active!==false&&payFits(x,country));
-const payOne=(x,noFor)=>[`${payIco(x.name)} ${x.name}${x.for&&!noFor?` (${x.for})`:""}`,...String(x.details||"").split(/\n/).map(l=>l.trim()).filter(Boolean),...(x.note?[`ℹ️ ${x.note}`]:[])].join("\n");
-const payAllText=(country)=>[`💳 وسائل الدفع المتاحة${country?" في "+country:""}:`,"",payLive(country).map(x=>payOne(x,!!country)).join("\n\n"),...(PAY.footer?["",PAY.footer]:[])].join("\n");
-function renderPay(){const adm=isAdmin();$("payAdd").hidden=!adm;$("payFooter").value=PAY.footer||"";$("payFooter").disabled=!adm;
-  if(!$("payCountry").options.length)$("payCountry").innerHTML=`<option value="">كل الدول</option>`+COUNTRIES.map(c=>`<option>${esc(c)}</option>`).join("");$("payCountry").value=payCountry;
-  const shownPay=PAY.items.filter(x=>payFits(x,payCountry)),nLive=payLive(payCountry).length;
-  $("payCountryNote").textContent=payCountry?`${nLive} وسيلة تنفع في ${payCountry}`:"";
-  $("payAll").textContent=payCountry?`📋 نسخ وسائل ${payCountry}`:"📋 نسخ كل الوسائل";
-  $("payList").innerHTML=shownPay.length?shownPay.map(x=>`<article class="paycard ${x.active===false?"off":""}">
-    <div class="pc-top"><span class="pc-ico">${payIco(x.name)}</span><div><div class="pc-name">${esc(x.name)}</div>${x.for?`<div class="pc-for">${esc(x.for)}</div>`:""}</div></div>
-    ${x.details?`<div class="pc-det" dir="auto">${esc(x.details)}</div>`:""}${x.note?`<div class="pc-note">ℹ️ ${esc(x.note)}</div>`:""}
-    <div class="pc-acts"><button type="button" class="primary" data-p="copy" data-id="${esc(x.id)}">📋 نسخ</button>${adm?`<button type="button" data-p="edit" data-id="${esc(x.id)}" aria-label="تعديل">✏️</button>`:""}</div></article>`).join("")
-  :PAY.items.length?`<div class="empty"><h2>مفيش وسيلة متسجلة في ${esc(payCountry)}</h2>عدّلي وسيلة وضيفي «${esc(payCountry)}» في خانة الدول، أو سيبي الخانة فاضية لو بتنفع لكل الدول.</div>`
-  :`<div class="empty"><h2>لسه مفيش وسائل دفع</h2>${adm?"دوسي «+ وسيلة» وضيفي فودافون كاش أو InstaPay أو التحويل البنكي.":"الأدمن هو اللي بيضيف وسائل الدفع."}</div>`;
-  $("payAll").disabled=!payLive(payCountry).length}
+let PAY={items:[]},editingPay=null;
+const cKey=c=>String(c||"").replace(/[ً-ْ]/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/^ال/,"").replace(/\s+/g," ").trim().toLowerCase();
+/* بيانات قديمة: اسم/تفاصيل/ملاحظة → رسالة واحدة */
+const payCountry=x=>x.country!=null?x.country:(x.for||"");
+const payMsg=x=>x.msg!=null?x.msg:[x.name,x.details,x.note].filter(Boolean).join("\n");
+const payCs=x=>String(payCountry(x)).split(/\s*[،,؛;\/\n]\s*/).map(cKey).filter(Boolean);
+function payFits(x,country){const k=cKey(country);if(!k)return false;return payCs(x).some(c=>c===k||c.includes(k)||k.includes(c))}
+const payFor=country=>PAY.items.filter(x=>x.active!==false&&payFits(x,country));
+const payText=country=>payFor(country).map(payMsg).join("\n\n");
+function renderPay(){const adm=isAdmin(),q=$("payQ").value.trim();$("payAdd").hidden=!adm;
+  const list=q?PAY.items.filter(x=>payFits(x,q)):PAY.items;
+  $("payList").innerHTML=list.length?list.map(x=>`<article class="paycard ${x.active===false?"off":""}">
+    <div class="pc-top"><span class="pc-ico">🌍</span><div class="pc-name">${esc(payCountry(x)||"من غير دولة")}</div></div>
+    ${payMsg(x)?`<div class="pc-det" dir="rtl">${esc(payMsg(x))}</div>`:""}
+    <div class="pc-acts"><button type="button" class="primary" data-p="copy" data-id="${esc(x.id)}">📋 نسخ الرسالة</button>${adm?`<button type="button" data-p="edit" data-id="${esc(x.id)}" aria-label="تعديل">✏️</button>`:""}</div></article>`).join("")
+  :q?`<div class="empty"><h2>مفيش رسالة متسجلة لـ«${esc(q)}»</h2>${adm?"دوسي «+ دولة» وضيفيها.":""}</div>`
+  :`<div class="empty"><h2>لسه مفيش وسائل دفع</h2>${adm?"دوسي «+ دولة»، واكتبي اسم الدولة ورسالة بيانات التحويل بتاعتها.":"الأدمن هو اللي بيضيف وسائل الدفع."}</div>`}
 async function savePay(msg){const {error}=await SB.from("config").upsert([{key:"payments",value:PAY,updated_at:new Date().toISOString()}]);if(error){toast(errMsg(error));return false}toast(msg);return true}
-function openPayForm(x){editingPay=x||null;$("payForm").hidden=false;$("p_name").value=x?x.name:"";$("p_for").value=x?x.for||"":"";$("p_details").value=x?x.details||"":"";$("p_note").value=x?x.note||"":"";$("p_active").checked=x?x.active!==false:true;$("p_del").hidden=!x;$("p_name").focus()}
+function openPayForm(x){editingPay=x||null;$("payForm").hidden=false;$("p_country").value=x?payCountry(x):($("payQ").value.trim()||"");$("p_msg").value=x?payMsg(x):"";$("p_active").checked=x?x.active!==false:true;$("p_del").hidden=!x;$("p_country").focus()}
 $("payBtn").onclick=async()=>{$("payForm").hidden=true;renderPay();$("payDlg").showModal();await loadConfig();renderPay()};
 $("closePay").onclick=()=>$("payDlg").close();
+$("payQ").addEventListener("input",renderPay);
 $("payAdd").onclick=()=>openPayForm(null);
 $("p_cancel").onclick=()=>{$("payForm").hidden=true};
-$("p_save").onclick=async()=>{const name=$("p_name").value.trim();if(!name){$("p_name").focus();toast("اكتبي اسم الوسيلة");return}
-  const d={id:editingPay?editingPay.id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),name,for:$("p_for").value.trim(),details:$("p_details").value.trim(),note:$("p_note").value.trim(),active:$("p_active").checked};
+$("p_save").onclick=async()=>{const country=$("p_country").value.trim(),msg=$("p_msg").value.trim();
+  if(!country){$("p_country").focus();toast("اكتبي اسم الدولة");return}if(!msg){$("p_msg").focus();toast("اكتبي رسالة بيانات التحويل");return}
+  const d={id:editingPay?editingPay.id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),country,msg,active:$("p_active").checked};
   const old=JSON.parse(JSON.stringify(PAY));PAY.items=editingPay?PAY.items.map(x=>x.id===d.id?d:x):[...PAY.items,d];
-  if(await savePay(editingPay?"اتحفظت الوسيلة":"اتضافت الوسيلة")){$("payForm").hidden=true}else PAY=old;renderPay()};
+  if(await savePay(editingPay?"اتحفظت":"اتضافت")){$("payForm").hidden=true}else PAY=old;renderPay();payForLead()};
 $("p_del").onclick=async()=>{if(!editingPay)return;const old=JSON.parse(JSON.stringify(PAY));PAY.items=PAY.items.filter(x=>x.id!==editingPay.id);
-  if(await savePay("اتحذفت الوسيلة"))$("payForm").hidden=true;else PAY=old;renderPay()};
-$("payFooter").addEventListener("change",async()=>{PAY.footer=$("payFooter").value.trim();await savePay("اتحفظ آخر سطر")});
-$("payAll").onclick=async()=>{if(!(await copyText(payAllText(payCountry),payCountry?"اتنسخت وسائل "+payCountry:"اتنسخت كل وسائل الدفع")))toast("مقدرتش أنسخ")};
-$("payCountry").addEventListener("change",e=>{payCountry=e.target.value;renderPay()});
-function payForLead(){const c=$("f_country").value.trim(),n=payLive(c).length;$("payForNote").textContent=!PAY.items.length?"ضيفي وسائل الدفع الأول من «💳 وسائل الدفع»":n?`${n} وسيلة${c?" تنفع في "+c:""}`:`مفيش وسيلة متسجلة في ${c}`;$("copyPayFor").disabled=!n}
-$("f_country").addEventListener("input",payForLead);
-$("copyPayFor").onclick=async()=>{const c=$("f_country").value.trim();if(!(await copyText(payAllText(c),c?"اتنسخت وسائل الدفع بتاعة "+c:"اتنسخت وسائل الدفع")))toast("مقدرتش أنسخ")};
+  if(await savePay("اتحذفت"))$("payForm").hidden=true;else PAY=old;renderPay()};
 $("payList").addEventListener("click",async e=>{const b=e.target.closest("[data-p]");if(!b)return;const x=PAY.items.find(i=>i.id===b.dataset.id);if(!x)return;
-  if(b.dataset.p==="edit")openPayForm(x);if(b.dataset.p==="copy"&&!(await copyText(payOne(x),"اتنسخت "+x.name)))toast("مقدرتش أنسخ")});
+  if(b.dataset.p==="edit")openPayForm(x);if(b.dataset.p==="copy"&&!(await copyText(payMsg(x),"اتنسخت رسالة "+payCountry(x))))toast("مقدرتش أنسخ")});
+function payForLead(){const c=$("f_country").value.trim(),n=payFor(c).length;
+  $("payForNote").textContent=!c?"اكتبي دولة العميل فوق":n?`فيه رسالة جاهزة لعملاء ${c}`:`مفيش رسالة متسجلة لعملاء ${c} — ضيفيها من «💳 وسائل الدفع»`;$("copyPayFor").disabled=!n}
+$("f_country").addEventListener("input",payForLead);
+$("copyPayFor").onclick=async()=>{const c=$("f_country").value.trim();if(!(await copyText(payText(c),"اتنسخت بيانات التحويل ("+c+")")))toast("مقدرتش أنسخ")};
 
 /* ================= offers ================= */
 function matchCount(o){const k=examKey(o.exam);return k?rows.filter(r=>{const e=examKey(r.exam);return e&&(e.includes(k)||k.includes(e))}).length:0}
