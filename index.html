@@ -67,6 +67,26 @@ tr.row.is-next{outline:2px solid var(--c-price);outline-offset:-2px}
 .donebdg{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--c-booked);color:#fff;font-weight:800}
 .sentbtn{background:var(--t-follow);color:var(--c-follow);border:1px solid var(--c-follow);font-size:12.5px;padding:4px 9px;white-space:nowrap;font-weight:700}
 .sentbtn:hover{background:var(--c-follow);color:#fff}
+#guideBtn{background:linear-gradient(120deg,#6a3fb5,#9a6ad6);color:#fff;border:0;border-radius:999px;font-weight:800;box-shadow:0 2px 8px rgba(106,63,181,.3)}
+#guideDlg{width:min(860px,calc(100vw - 24px))}
+#guideDlg .dlg-head{background:linear-gradient(120deg,#6a3fb5,#9a6ad6);color:#fff;border-bottom:0;flex-wrap:wrap}
+#guideDlg .dlg-head h2{color:#fff}
+#guideDlg .dlg-head button{border-color:rgba(255,255,255,.45);background:transparent;color:#fff}
+#guideDlg .dlg-head #guideAdd{background:#fff;color:#6a3fb5;border-color:#fff}
+#guideDlg .dlg-head #guideQ{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;min-width:0;width:190px}
+#guideDlg .dlg-head #guideQ::placeholder{color:rgba(255,255,255,.8)}
+#guideCats button[aria-pressed="true"]{background:#6a3fb5;border-color:#6a3fb5;color:#fff}
+.guidelist{padding:16px 18px 20px;display:grid;gap:10px;background:var(--soft)}
+.guide{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.guide summary{cursor:pointer;padding:12px 14px;display:flex;gap:10px;align-items:center;font-weight:800;list-style:none}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::before{content:"📖";font-size:16px}
+.guide[open] summary{border-bottom:1px solid var(--line);background:var(--t-study)}
+.g-t{flex:1;min-width:0}
+.g-c{font-size:11.5px;font-weight:700;color:var(--c-study);background:var(--t-study);border-radius:999px;padding:2px 10px}
+.g-b{padding:12px 14px;white-space:pre-wrap;line-height:1.8;font-size:13.5px;unicode-bidi:isolate;text-align:right}
+.g-a{display:flex;gap:6px;padding:0 14px 12px}
+.guidelist .empty{padding:20px}
 #payBtn{background:linear-gradient(120deg,#0f7a5a,#1aa37a);color:#fff;border:0;border-radius:999px;font-weight:800;box-shadow:0 2px 8px rgba(26,163,122,.3)}
 #payBtn:hover{filter:brightness(1.1)}
 #payDlg{width:min(900px,calc(100vw - 24px))}
@@ -317,6 +337,7 @@ textarea{min-height:70px;resize:vertical}
   <button id="importBtn" type="button">استيراد CSV</button>
   <button id="exportBtn" type="button">تصدير CSV</button>
   <button id="payBtn" type="button">💳 وسائل الدفع</button>
+<button id="guideBtn" type="button">📖 التعليمات</button>
   <button id="offersBtn" type="button"><span aria-hidden="true">🏷️</span> العروض <b id="offCount" hidden></b></button>
   <button id="reportsBtn" type="button">التقارير</button>
   <button id="rulesBtn" type="button">الإعدادات</button>
@@ -448,6 +469,18 @@ textarea{min-height:70px;resize:vertical}
     <span class="grow"></span><button type="button" id="applyRules">طبّق على العملاء اللي ملهمش ميعاد</button></div>
 </dialog>
 
+<dialog id="guideDlg">
+  <div class="dlg-head"><h2>📖 التعليمات</h2><input id="guideQ" placeholder="🔎 دوّري…" aria-label="بحث في التعليمات"><span class="grow"></span>
+    <button type="button" id="guideAdd">+ تعليمات</button><button type="button" id="closeGuide" aria-label="إغلاق">✕</button></div>
+  <div id="guideCats" class="offbar" role="group" aria-label="الأقسام"></div>
+  <div id="guideForm" class="grid offform" hidden>
+    <label>العنوان<input id="g_title" placeholder="مثال: خطوات عمل حساب Pearson VUE"></label>
+    <label>القسم <span class="sub">(اختياري)</span><input id="g_cat" list="guideCatList" placeholder="مثال: للعميل / للفريق"><datalist id="guideCatList"></datalist></label>
+    <label class="full">النص <span class="sub">— بيتنسخ زي ما هو</span><textarea id="g_body" dir="rtl" rows="10" placeholder="اكتبي التعليمات هنا…"></textarea></label>
+    <span class="quick" style="grid-column:1/-1"><button type="button" class="primary" id="g_save">حفظ</button><button type="button" id="g_cancel">إلغاء</button><span class="grow"></span><button type="button" class="danger" id="g_del" hidden>حذف</button></span>
+  </div>
+  <div id="guideList" class="guidelist"></div>
+</dialog>
 <dialog id="payDlg">
   <div class="dlg-head"><h2>💳 وسائل الدفع</h2><input id="payQ" placeholder="🌍 دوّري على دولة…" aria-label="بحث بالدولة"><span class="grow"></span>
     <button type="button" id="payAdd">+ دولة</button><button type="button" id="closePay" aria-label="إغلاق">✕</button></div>
@@ -726,7 +759,7 @@ async function loadOffers(){const {data,error}=await SB.from("offers").select("*
 async function loadConfig(){const {data}=await SB.from("config").select("key,value");
   (data||[]).forEach(c=>{if(c.key==="rules"){const d=c.value||{};RULES={reasons:{...DEFAULT_RULES.reasons,...(d.reasons||{})},noReason:d.noReason??DEFAULT_RULES.noReason,courseDays:d.courseDays??DEFAULT_RULES.courseDays}}
     if(c.key==="templates")TEMPLATES={...DEFAULT_TPL,...(c.value||{})}
-    if(c.key==="payments"&&c.value)PAY={items:Array.isArray(c.value.items)?c.value.items:[]}})}
+    if(c.key==="payments"&&c.value)PAY={items:Array.isArray(c.value.items)?c.value.items:[]};if(c.key==="guides"&&c.value)GUIDES={items:Array.isArray(c.value.items)?c.value.items:[]}})}
 async function insertLead(o){const {data,error}=await SB.from("leads").insert(toDb(o)).select().single();if(error)throw error;const r=fromDb(data);upsertLocal(r);render();return r}
 async function updateLead(id,o){const {data,error}=await SB.from("leads").update(toDb(o)).eq("id",id).select().single();if(error)throw error;const r=fromDb(data);upsertLocal(r);render();return r}
 async function deleteLead(id){const {error}=await SB.from("leads").delete().eq("id",id);if(error)throw error;rows=rows.filter(r=>r.id!==id);render()}
@@ -852,6 +885,35 @@ $("tplSel").addEventListener("change",()=>{$("tplText").value=tplText($("tplSel"
 ["f_reason","f_status","f_due","f_paid"].forEach(id=>$(id).addEventListener("change",()=>{const k=tplKeyFor({...formData(),followLabel:autoLabel});$("tplSel").value=k;$("tplText").value=tplText(k,formData())}));
 async function copyText(t,okMsg){try{await navigator.clipboard.writeText(t);toast(okMsg);return true}catch(e){return false}}
 $("tplCopy").onclick=async()=>{if(!(await copyText($("tplText").value,"اتنسخت الرسالة"))){$("tplText").focus();$("tplText").select();toast("اضغط Ctrl+C للنسخ")}};
+
+/* ================= guides ================= */
+let GUIDES={items:[]},editingGuide=null,guideCat="";
+function renderGuides(){const adm=isAdmin(),q=$("guideQ").value.trim().toLowerCase();$("guideAdd").hidden=!adm;
+  const cats=[...new Set(GUIDES.items.map(g=>g.cat).filter(Boolean))];if(guideCat&&!cats.includes(guideCat))guideCat="";
+  $("guideCats").hidden=!cats.length;$("guideCats").innerHTML=[["","الكل"],...cats.map(c=>[c,c])].map(([k,l])=>`<button type="button" data-gc="${esc(k)}" aria-pressed="${guideCat===k}">${esc(l)} <b>${k?GUIDES.items.filter(g=>g.cat===k).length:GUIDES.items.length}</b></button>`).join("");
+  $("guideCatList").innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join("");
+  const list=GUIDES.items.filter(g=>(!guideCat||g.cat===guideCat)&&(!q||(g.title+" "+g.body).toLowerCase().includes(q)));
+  $("guideList").innerHTML=list.length?list.map(g=>`<details class="guide"><summary><span class="g-t">${esc(g.title)}</span>${g.cat?`<span class="g-c">${esc(g.cat)}</span>`:""}</summary>
+    <div class="g-b" dir="rtl">${esc(g.body)}</div>
+    <div class="g-a"><button type="button" class="primary" data-g="copy" data-id="${esc(g.id)}">📋 نسخ</button>${adm?`<button type="button" data-g="edit" data-id="${esc(g.id)}">✏️ تعديل</button>`:""}</div></details>`).join("")
+  :`<div class="empty"><h2>${GUIDES.items.length?"مفيش نتايج":"لسه مفيش تعليمات"}</h2>${GUIDES.items.length?"جربي كلمة تانية.":adm?"دوسي «+ تعليمات» وضيفي أول واحدة.":"الأدمن هو اللي بيضيف التعليمات."}</div>`}
+async function saveGuides(msg){const {error}=await SB.from("config").upsert([{key:"guides",value:GUIDES,updated_at:new Date().toISOString()}]);if(error){toast(errMsg(error));return false}toast(msg);return true}
+function openGuideForm(g){editingGuide=g||null;$("guideForm").hidden=false;$("g_title").value=g?g.title:"";$("g_cat").value=g?g.cat||"":guideCat;$("g_body").value=g?g.body:"";$("g_del").hidden=!g;$("guideForm").scrollIntoView({block:"start"});$("g_title").focus()}
+$("guideBtn").onclick=async()=>{$("guideForm").hidden=true;renderGuides();$("guideDlg").showModal();await loadConfig();renderGuides()};
+$("closeGuide").onclick=()=>$("guideDlg").close();
+$("guideQ").addEventListener("input",()=>{renderGuides();if($("guideQ").value.trim())$("guideList").querySelectorAll("details").forEach(d=>d.open=true)});
+$("guideCats").addEventListener("click",e=>{const b=e.target.closest("[data-gc]");if(b){guideCat=b.dataset.gc;renderGuides()}});
+$("guideAdd").onclick=()=>openGuideForm(null);
+$("g_cancel").onclick=()=>{$("guideForm").hidden=true};
+$("g_save").onclick=async()=>{const title=$("g_title").value.trim(),body=$("g_body").value.trim();
+  if(!title){$("g_title").focus();toast("اكتبي العنوان");return}if(!body){$("g_body").focus();toast("اكتبي النص");return}
+  const d={id:editingGuide?editingGuide.id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())),title,cat:$("g_cat").value.trim(),body};
+  const old=JSON.parse(JSON.stringify(GUIDES));GUIDES.items=editingGuide?GUIDES.items.map(x=>x.id===d.id?d:x):[...GUIDES.items,d];
+  if(await saveGuides(editingGuide?"اتحفظت":"اتضافت")){$("guideForm").hidden=true}else GUIDES=old;renderGuides()};
+$("g_del").onclick=async()=>{if(!editingGuide)return;const old=JSON.parse(JSON.stringify(GUIDES));GUIDES.items=GUIDES.items.filter(x=>x.id!==editingGuide.id);
+  if(await saveGuides("اتحذفت"))$("guideForm").hidden=true;else GUIDES=old;renderGuides()};
+$("guideList").addEventListener("click",async e=>{const b=e.target.closest("[data-g]");if(!b)return;e.preventDefault();const g=GUIDES.items.find(x=>x.id===b.dataset.id);if(!g)return;
+  if(b.dataset.g==="edit")openGuideForm(g);if(b.dataset.g==="copy"&&!(await copyText(g.body,"اتنسخت «"+g.title+"»")))toast("مقدرتش أنسخ")});
 
 /* ================= payments ================= */
 let PAY={items:[]},editingPay=null;
